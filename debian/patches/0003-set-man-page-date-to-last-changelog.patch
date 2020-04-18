@@ -1,0 +1,18 @@
+Description: Set the date of man pages to the last changelog entry.
+--- a/man/man3/Makefile.am
++++ b/man/man3/Makefile.am
+@@ -55,11 +55,14 @@
+ 	TPM_Malloc.3
+ 
+ man3_MANS += $(man3_MANS_generated)
++BUILD_DATE ?= $$(dpkg-parsechangelog -S Date -lchangelog)
++PODDATE = $$(date -u "+%Y-%m-%d" -d "$(BUILD_DATE)")
+ 
+ %.3 : %.pod
+ 	@pod2man -r "libtpms" \
+ 		-c "" \
+ 		-n $(basename $@) \
++		--date="$(PODDATE)" \
+ 		--section=3 $< > $@
+ 
+ EXTRA_DIST = $(man3_MANS) $(man3_PODS)

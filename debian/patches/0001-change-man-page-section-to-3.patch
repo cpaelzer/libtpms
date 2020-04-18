@@ -1,0 +1,92 @@
+Description: Change the sections of man pages to section 3.
+--- a/man/man3/TPMLIB_DecodeBlob.3
++++ b/man/man3/TPMLIB_DecodeBlob.3
+@@ -123,8 +123,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPMLIB_DECODEBLOB 1"
+-.TH TPMLIB_DECODEBLOB 1 "2011-08-30" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPMLIB_DECODEBLOB 3"
++.TH TPMLIB_DECODEBLOB 3 "2011-08-30" "libtpms-0.5.1" "libtpms documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+--- a/man/man3/TPMLIB_GetVersion.3
++++ b/man/man3/TPMLIB_GetVersion.3
+@@ -128,8 +128,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPMLIB_GETVERSION 1"
+-.TH TPMLIB_GETVERSION 1 "2011-03-09" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPMLIB_GETVERSION 3"
++.TH TPMLIB_GETVERSION 3 "2011-03-09" "libtpms-0.5.1" "libtpms documentation"
+ .SH "NAME"
+ TPMLIB_GetVersion  \- Get the version of the TPM library
+ .SH "LIBRARY"
+--- a/man/man3/TPMLIB_Process.3
++++ b/man/man3/TPMLIB_Process.3
+@@ -123,8 +123,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPMLIB_PROCESS 1"
+-.TH TPMLIB_PROCESS 1 "2011-02-17" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPMLIB_PROCESS 3"
++.TH TPMLIB_PROCESS 3 "2011-02-17" "libtpms-0.5.1" "libtpms documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+--- a/man/man3/TPMLIB_VolatileAll_Store.3
++++ b/man/man3/TPMLIB_VolatileAll_Store.3
+@@ -128,8 +128,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPMLIB_VOLATILEALL_STORE 1"
+-.TH TPMLIB_VOLATILEALL_STORE 1 "2011-03-09" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPMLIB_VOLATILEALL_STORE 3"
++.TH TPMLIB_VOLATILEALL_STORE 3 "2011-03-09" "libtpms-0.5.1" "libtpms documentation"
+ .SH "NAME"
+ TPMLIB_VolatileAll_Store   \- store all volatile state of the TPM in a buffer
+ .SH "LIBRARY"
+--- a/man/man3/TPM_IO_Hash_Start.3
++++ b/man/man3/TPM_IO_Hash_Start.3
+@@ -123,8 +123,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPM_IO_HASH_START 1"
+-.TH TPM_IO_HASH_START 1 "2011-02-02" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPM_IO_HASH_START 3"
++.TH TPM_IO_HASH_START 3 "2011-02-02" "libtpms-0.5.1" "libtpms documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+--- a/man/man3/TPM_IO_TpmEstablished_Get.3
++++ b/man/man3/TPM_IO_TpmEstablished_Get.3
+@@ -123,8 +123,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPM_IO_TPMESTABLISHED_GET 1"
+-.TH TPM_IO_TPMESTABLISHED_GET 1 "2011-02-17" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPM_IO_TPMESTABLISHED_GET 3"
++.TH TPM_IO_TPMESTABLISHED_GET 3 "2011-02-17" "libtpms-0.5.1" "libtpms documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+--- a/man/man3/TPM_Malloc.3
++++ b/man/man3/TPM_Malloc.3
+@@ -123,8 +123,8 @@
+ .rm #[ #] #H #V #F C
+ .\" ========================================================================
+ .\"
+-.IX Title "TPM_MALLOC 1"
+-.TH TPM_MALLOC 1 "2011-10-12" "libtpms-0.5.1" "libtpms documentation"
++.IX Title "TPM_MALLOC 3"
++.TH TPM_MALLOC 3 "2011-10-12" "libtpms-0.5.1" "libtpms documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l

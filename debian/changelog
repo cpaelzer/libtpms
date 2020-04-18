@@ -1,0 +1,20 @@
+libtpms (0.8.0~dev1-1) unstable; urgency=medium
+
+  * New maintainer (Closes: #958071)
+  * Updated standards version to 4.5.0 in debian/control
+  * Updated debhelper version to 12 in debian/control
+  * Added Rules-Requires-Root to debian/control
+  * Added Vcs-Browser and Vcs-Git to debian/control
+  * Removed autotools-dev and dh-autoreconf from debian/control since enabled
+    by default
+  * Removed autotools-dev, parallel options from debian/rules since deprecated
+    and enabled by default
+  * Converted debian/copyright to dep5-copyright format
+  * Added debian/watch file
+  * Added debian/libtpms.symbols file
+  * Added debian/upstream/metadata file
+  * Changed section of man pages from 1 to 3
+  * Fixed typos and a long line warning in man pages
+  * Set date of man pages to last changelog entry
+
+ -- Seunghun Han <kkamagui@gmail.com>  Sat, 18 Apr 2020 09:20:03 +0900

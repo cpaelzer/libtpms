@@ -1,0 +1,38 @@
+CHANGES - changes for libtpms
+
+version 0.8.0
+  - updated to TPM 2 code release 159
+    - X509 support is enabled
+      - SM2 signing of ceritificates is NOT supported
+    - Authenticated timers are disabled
+  - Due to fixes in the TPM 2 prime number generation code in rev155 it is not
+    possible to downgrade from libtpms version 0.8.0 to some previous version.
+    The seeds are now associated with an age so that older seeds use the old
+    TPM 2 prime number generation code while newer seed use the newer code.
+
+version 0.7.0
+  - use OpenSSL crypto for AES, TDES, EC, and RSA operations when possible
+
+version 0.6.0
+  - added TPM 2 support (revision 150)
+
+  - New API calls:
+    - TPMLIB_CancelCommand
+    - TPMLIB_ChooseTPMVersion
+    - TPMLIB_SetDebugFD
+    - TPMLIB_SetDebugLevel
+    - TPMLIB_SetDebugPrefix
+    - TPMLIB_SetBufferSize
+    - TPMLIB_ValidateState
+    - TPMLIB_SetState
+    - TPMLIB_GetState
+
+version 0.5.1
+  first public release
+
+  - release 7 increased NVRAM area for being able to store more data in
+    the TPM's NVRAM areas, i.e., X.509 certificates
+
+  - release 9 added two more APIs:
+    - TPM_Free
+    - TPMLIB_DecodeBlob
