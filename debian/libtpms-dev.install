@@ -1,4 +1,5 @@
 /usr/include/libtpms/*.h
 /usr/share/man/man3/*.3
 usr/lib/*/*.so
+usr/lib/*/*.a
 usr/lib/*/pkgconfig/

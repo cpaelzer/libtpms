@@ -1,3 +1,13 @@
+libtpms (0.8.0~dev1-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * debian/control: Set git packaging repo to be under Salsa Debian
+    group.
+  * Source-only upload to allow testing migration.
+  * debian/install: Also install static library for -dev package.
+
+ -- Boyuan Yang <byang@debian.org>  Tue, 07 Jul 2020 10:58:58 -0400
+
 libtpms (0.8.0~dev1-1) unstable; urgency=medium
 
   * New maintainer (Closes: #958071)
