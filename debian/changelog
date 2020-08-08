@@ -1,3 +1,10 @@
+libtpms (0.8.0~dev1-1.2) unstable; urgency=medium
+
+  *Fix a non-reproducible bug caused by the invalid path (Closes: #964768)
+  *Fix a FTBFS bug caused by the incomplete condition (Closes: #966857)
+
+ -- Seunghun Han <kkamagui@gmail.com>  Sun, 09 Aug 2020 02:31:09 +0900
+
 libtpms (0.8.0~dev1-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.

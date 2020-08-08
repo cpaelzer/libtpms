@@ -5,7 +5,7 @@ Description: Set the date of man pages to the last changelog entry.
  	TPM_Malloc.3
  
  man3_MANS += $(man3_MANS_generated)
-+BUILD_DATE ?= $$(dpkg-parsechangelog -S Date -lchangelog)
++BUILD_DATE ?= $$(dpkg-parsechangelog -S Date -l../../debian/changelog)
 +PODDATE = $$(date -u "+%Y-%m-%d" -d "$(BUILD_DATE)")
  
  %.3 : %.pod

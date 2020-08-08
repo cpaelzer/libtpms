@@ -1,0 +1,12 @@
+Description: Fix FTBFS caused by the incomplete condition.
+--- a/src/tpm2/NVDynamic.c
++++ b/src/tpm2/NVDynamic.c
+@@ -122,7 +122,7 @@
+ 	    if(HandleGetType(nvHandle) == type)
+ 		break;
+ 	}
+-    if(handle != NULL)
++    if((handle != NULL) && (addr != 0))
+ 	*handle = nvHandle;
+     return addr;
+ }
