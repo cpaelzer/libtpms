@@ -74,6 +74,7 @@ libtpms_tpm12_la_SOURCES = \
 	tpm12/tpm_nonce.c \
 	tpm12/tpm_nvfile.c \
 	tpm12/tpm_nvram.c \
+	tpm12/tpm_openssl_helpers.c \
 	tpm12/tpm_owner.c \
 	tpm12/tpm_pcr.c \
 	tpm12/tpm_permanent.c \
@@ -120,6 +121,7 @@ noinst_HEADERS = \
 	tpm12/tpm_nvfile.h \
 	tpm12/tpm_nvram_const.h \
 	tpm12/tpm_nvram.h \
+	tpm12/tpm_openssl_helpers.h \
 	tpm12/tpm_owner.h \
 	tpm12/tpm_pcr.h \
 	tpm12/tpm_permanent.h \
@@ -274,6 +276,7 @@ libtpms_tpm2_la_SOURCES = \
 	tpm_tpm2_interface.c \
 	tpm_tpm2_tis.c \
 	\
+	tpm2/BackwardsCompatibilityObject.c \
 	tpm2/LibtpmsCallbacks.c \
 	tpm2/NVMarshal.c \
 	tpm2/StateMarshal.c \
@@ -284,6 +287,7 @@ noinst_HEADERS += \
 	tpm2/crypto/CryptCmac_fp.h \
 	tpm2/crypto/CryptDes_fp.h \
 	tpm2/crypto/CryptEcc.h \
+	tpm2/crypto/CryptEccCrypt_fp.h \
 	tpm2/crypto/CryptEccKeyExchange_fp.h \
 	tpm2/crypto/CryptEccMain_fp.h \
 	tpm2/crypto/CryptEccSignature_fp.h \
@@ -509,6 +513,7 @@ noinst_HEADERS += \
 	tpm2/ZGen_2Phase_fp.h \
 	\
 	tpm2/BackwardsCompatibility.h \
+	tpm2/BackwardsCompatibilityObject.h \
 	tpm2/LibtpmsCallbacks.h \
 	tpm2/NVMarshal.h \
 	tpm2/StateMarshal.h \
@@ -536,6 +541,7 @@ libtpms_tpm2_la_SOURCES += \
 	tpm2/crypto/openssl/TpmToOsslSupport.c
 
 noinst_HEADERS += \
+	tpm2/crypto/openssl/ConsttimeUtils.h \
 	tpm2/crypto/openssl/BnConvert_fp.h \
 	tpm2/crypto/openssl/BnMath_fp.h \
 	tpm2/crypto/openssl/BnMemory_fp.h \

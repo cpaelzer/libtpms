@@ -3,7 +3,7 @@
 /*			     Parameter Unmarshaling				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Unmarshal.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: Unmarshal.c 1635 2020-06-12 21:48:27Z kgoldman $		*/
 /*										*/
 /* (c) Copyright IBM Corporation 2015 - 2018					*/
 /*										*/
@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include "Unmarshal_fp.h"
+#include "CryptEccMain_fp.h"	// libtpms added
 
 TPM_RC
 UINT8_Unmarshal(UINT8 *target, BYTE **buffer, INT32 *size)
@@ -157,7 +158,8 @@ TPM_KEY_BITS_Unmarshal(TPM_KEY_BITS *target, BYTE **buffer, INT32 *size)
 }
 
 /* Table 7 - Definition of (UINT32) TPM_GENERATED Constants <O> */
-#if 0		// libtpms added
+
+#if 0
 TPM_RC
 TPM_GENERATED_Unmarshal(TPM_GENERATED *target, BYTE **buffer, INT32 *size)
 {
@@ -173,7 +175,7 @@ TPM_GENERATED_Unmarshal(TPM_GENERATED *target, BYTE **buffer, INT32 *size)
     }
     return rc;
 }
-#endif		// libtpms added
+#endif
 
 /* Table 9 - Definition of (UINT16) TPM_ALG_ID Constants <IN/OUT, S> */
 
@@ -394,6 +396,7 @@ TPM_CAP_Unmarshal(TPM_CAP *target, BYTE **buffer, INT32 *size)
 	  case TPM_CAP_PCR_PROPERTIES:
 	  case TPM_CAP_ECC_CURVES:
 	  case TPM_CAP_AUTH_POLICIES:
+	  case TPM_CAP_ACT:
 	  case TPM_CAP_VENDOR_PROPERTY:
 	    break;
 	  default:
@@ -3113,7 +3116,7 @@ TPMS_KEY_SCHEME_ECMQV_Unmarshal(TPMS_KEY_SCHEME_ECMQV *target, BYTE **buffer, IN
 /* Table 148 - Definition of Types for KDF Schemes, hash-based key- or mask-generation functions */
 
 TPM_RC
-TPMS_SCHEME_KDF1_SP800_108_Unmarshal(TPMS_SCHEME_KDF1_SP800_108 *target, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF1_SP800_108_Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_108 *target, BYTE **buffer, INT32 *size)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
 
@@ -3126,7 +3129,7 @@ TPMS_SCHEME_KDF1_SP800_108_Unmarshal(TPMS_SCHEME_KDF1_SP800_108 *target, BYTE **
 /* Table 148 - Definition of Types for KDF Schemes, hash-based key- or mask-generation functions */
 
 TPM_RC
-TPMS_SCHEME_KDF1_SP800_56A_Unmarshal(TPMS_SCHEME_KDF1_SP800_56A *target, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF1_SP800_56A_Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_56A *target, BYTE **buffer, INT32 *size)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
 
@@ -3139,7 +3142,7 @@ TPMS_SCHEME_KDF1_SP800_56A_Unmarshal(TPMS_SCHEME_KDF1_SP800_56A *target, BYTE **
 /* Table 148 - Definition of Types for KDF Schemes, hash-based key- or mask-generation functions */
 
 TPM_RC
-TPMS_SCHEME_KDF2_Unmarshal(TPMS_SCHEME_KDF2 *target, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF2_Unmarshal(TPMS_KDF_SCHEME_KDF2 *target, BYTE **buffer, INT32 *size)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
 
@@ -3152,7 +3155,7 @@ TPMS_SCHEME_KDF2_Unmarshal(TPMS_SCHEME_KDF2 *target, BYTE **buffer, INT32 *size)
 /* Table 148 - Definition of Types for KDF Schemes, hash-based key- or mask-generation functions */
 
 TPM_RC
-TPMS_SCHEME_MGF1_Unmarshal(TPMS_SCHEME_MGF1 *target, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_MGF1_Unmarshal(TPMS_KDF_SCHEME_MGF1 *target, BYTE **buffer, INT32 *size)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
 
@@ -3172,22 +3175,22 @@ TPMU_KDF_SCHEME_Unmarshal(TPMU_KDF_SCHEME *target, BYTE **buffer, INT32 *size, U
     switch (selector) {
 #if ALG_MGF1
       case TPM_ALG_MGF1:
-	rc = TPMS_SCHEME_MGF1_Unmarshal(&target->mgf1, buffer, size);
+	rc = TPMS_KDF_SCHEME_MGF1_Unmarshal(&target->mgf1, buffer, size);
 	break;
 #endif
 #if ALG_KDF1_SP800_56A
       case TPM_ALG_KDF1_SP800_56A:
-	rc = TPMS_SCHEME_KDF1_SP800_56A_Unmarshal(&target->kdf1_sp800_56a, buffer, size);
+	rc = TPMS_KDF_SCHEME_KDF1_SP800_56A_Unmarshal(&target->kdf1_sp800_56a, buffer, size);
 	break;
 #endif
 #if ALG_KDF2
       case TPM_ALG_KDF2:
-	rc = TPMS_SCHEME_KDF2_Unmarshal(&target->kdf2, buffer, size);
+	rc = TPMS_KDF_SCHEME_KDF2_Unmarshal(&target->kdf2, buffer, size);
 	break;
 #endif
 #if ALG_KDF1_SP800_108
       case TPM_ALG_KDF1_SP800_108:
-	rc = TPMS_SCHEME_KDF1_SP800_108_Unmarshal(&target->kdf1_sp800_108, buffer, size);
+	rc = TPMS_KDF_SCHEME_KDF1_SP800_108_Unmarshal(&target->kdf1_sp800_108, buffer, size);
 	break;
 #endif
       case TPM_ALG_NULL:
@@ -3461,6 +3464,7 @@ TPMI_RSA_KEY_BITS_Unmarshal(TPMI_RSA_KEY_BITS *target, BYTE **buffer, INT32 *siz
 	switch (*target) {
 	  case 1024:
 	  case 2048:
+	  case 3072:
 	    break;
 	  default:
 	    rc = TPM_RC_VALUE;
@@ -3598,12 +3602,30 @@ TPMI_ECC_CURVE_Unmarshal(TPMI_ECC_CURVE *target, BYTE **buffer, INT32 *size)
 #if ECC_BN_P256
 	  case TPM_ECC_BN_P256:
 #endif
+#if ECC_BN_P638		// libtpms added begin
+	  case TPM_ECC_BN_P638:
+#endif
+#if ECC_NIST_P192
+	  case TPM_ECC_NIST_P192:
+#endif
+#if ECC_NIST_P224
+	  case TPM_ECC_NIST_P224:
+#endif			// libtpms added end
 #if ECC_NIST_P256
 	  case TPM_ECC_NIST_P256:
 #endif
 #if ECC_NIST_P384
 	  case TPM_ECC_NIST_P384:
 #endif
+#if ECC_NIST_P521	// libtpms added begin
+	  case TPM_ECC_NIST_P521:
+#endif
+#if ECC_SM2_P256
+	  case TPM_ECC_SM2_P256:
+#endif
+          if (!CryptEccIsCurveRuntimeUsable(*target))
+              rc = TPM_RC_CURVE;
+                      // libtpms added end
 	    break;
 	  default:
 	    rc = TPM_RC_CURVE;

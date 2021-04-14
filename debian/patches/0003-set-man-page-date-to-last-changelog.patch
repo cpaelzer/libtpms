@@ -1,4 +1,6 @@
 Description: Set the date of man pages to the last changelog entry.
+Forwarded: not-needed
+
 --- a/man/man3/Makefile.am
 +++ b/man/man3/Makefile.am
 @@ -55,11 +55,14 @@

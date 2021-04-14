@@ -3,7 +3,7 @@
 /*			   Parameter Marshaling  				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Marshal_fp.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: Marshal_fp.h 1635 2020-06-12 21:48:27Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -83,7 +83,7 @@ extern "C" {
     UINT16
     TPM_KEY_BITS_Marshal(TPM_KEY_BITS *source, BYTE **buffer, INT32 *size);
     UINT16
-    TPM_GENERATED_Marshal(TPM_GENERATED *source, BYTE **buffer, INT32 *size);
+    TPM_CONSTANTS32_Marshal(TPM_CONSTANTS32 *source, BYTE **buffer, INT32 *size);
     UINT16
     TPM_ALG_ID_Marshal(TPM_ALG_ID *source, BYTE **buffer, INT32 *size);    
     UINT16
@@ -114,6 +114,8 @@ extern "C" {
     TPMA_CC_Marshal(TPMA_CC *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_YES_NO_Marshal(TPMI_YES_NO *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPMA_ACT_Marshal(TPMA_ACT *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_DH_SAVED_Marshal(TPMI_DH_CONTEXT *source, BYTE **buffer, INT32 *size);
     UINT16
@@ -171,6 +173,8 @@ extern "C" {
     UINT16
     TPMS_TAGGED_POLICY_Marshal(TPMS_TAGGED_POLICY *source, BYTE **buffer, INT32 *size);
     UINT16
+    TPMS_ACT_DATA_Marshal(TPMS_ACT_DATA *source, BYTE **buffer, INT32 *size);
+    UINT16
     TPMS_TAGGED_PROPERTY_Marshal(TPMS_TAGGED_PROPERTY *source, BYTE **buffer, INT32 *size);
     UINT16
     TPML_CC_Marshal(TPML_CC *source, BYTE **buffer, INT32 *size);
@@ -196,6 +200,8 @@ extern "C" {
     TPML_ECC_CURVE_Marshal(TPML_ECC_CURVE *source, BYTE **buffer, INT32 *size);
     UINT16
     TPML_TAGGED_POLICY_Marshal(TPML_TAGGED_POLICY *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPML_ACT_DATA_Marshal(TPML_ACT_DATA *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMU_CAPABILITIES_Marshal(TPMU_CAPABILITIES *source, BYTE **buffer, INT32 *size, UINT32 selector);
     UINT16
@@ -232,6 +238,8 @@ extern "C" {
     TPM2B_ATTEST_Marshal(TPM2B_ATTEST *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_AES_KEY_BITS_Marshal(TPMI_AES_KEY_BITS *source, BYTE **buffer, INT32 *size);
+    UINT16			// libtpms added
+    TPMI_TDES_KEY_BITS_Marshal(TPMI_TDES_KEY_BITS *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_CAMELLIA_KEY_BITS_Marshal(TPMI_CAMELLIA_KEY_BITS *source, BYTE **buffer, INT32 *size);
     UINT16
@@ -265,6 +273,8 @@ extern "C" {
     UINT16
     TPMS_SIG_SCHEME_ECDSA_Marshal(TPMS_SIG_SCHEME_ECDSA *source, BYTE **buffer, INT32 *size);
     UINT16
+    TPMS_SIG_SCHEME_SM2_Marshal(TPMS_SIG_SCHEME_SM2 *source, BYTE **buffer, INT32 *size);
+    UINT16
     TPMS_SIG_SCHEME_ECSCHNORR_Marshal(TPMS_SIG_SCHEME_ECSCHNORR *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMS_SIG_SCHEME_ECDAA_Marshal(TPMS_SIG_SCHEME_ECDAA *source, BYTE **buffer, INT32 *size);
@@ -279,13 +289,13 @@ extern "C" {
     UINT16
     TPMS_KEY_SCHEME_ECMQV_Marshal(TPMS_KEY_SCHEME_ECMQV*source, BYTE **buffer, INT32 *size);
     UINT16
-    TPMS_SCHEME_MGF1_Marshal(TPMS_SCHEME_MGF1 *source, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_MGF1_Marshal(TPMS_KDF_SCHEME_MGF1 *source, BYTE **buffer, INT32 *size);
     UINT16
-    TPMS_SCHEME_KDF1_SP800_56A_Marshal(TPMS_SCHEME_KDF1_SP800_56A *source, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF1_SP800_56A_Marshal(TPMS_KDF_SCHEME_KDF1_SP800_56A *source, BYTE **buffer, INT32 *size);
     UINT16
-    TPMS_SCHEME_KDF2_Marshal(TPMS_SCHEME_KDF2 *source, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF2_Marshal(TPMS_KDF_SCHEME_KDF2 *source, BYTE **buffer, INT32 *size);
     UINT16
-    TPMS_SCHEME_KDF1_SP800_108_Marshal(TPMS_SCHEME_KDF1_SP800_108 *source, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF1_SP800_108_Marshal(TPMS_KDF_SCHEME_KDF1_SP800_108 *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMU_KDF_SCHEME_Marshal(TPMU_KDF_SCHEME *source, BYTE **buffer, INT32 *size, UINT32 selector);
     UINT16
@@ -329,6 +339,8 @@ extern "C" {
     UINT16
     TPMS_SIGNATURE_ECDAA_Marshal(TPMS_SIGNATURE_ECDAA *source, BYTE **buffer, INT32 *size);
     UINT16
+    TPMS_SIGNATURE_SM2_Marshal(TPMS_SIGNATURE_SM2 *source, BYTE **buffer, INT32 *size);
+    UINT16
     TPMS_SIGNATURE_ECSCHNORR_Marshal(TPMS_SIGNATURE_ECSCHNORR *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMU_SIGNATURE_Marshal(TPMU_SIGNATURE *source, BYTE **buffer, INT32 *size, UINT32 selector);
@@ -348,10 +360,6 @@ extern "C" {
     TPMS_ECC_PARMS_Marshal(TPMS_ECC_PARMS *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMU_PUBLIC_PARMS_Marshal(TPMU_PUBLIC_PARMS *source, BYTE **buffer, INT32 *size, UINT32 selector);
-#if 0 /* libtpms added */
-    UINT16
-    TPMT_PUBLIC_PARMS_Marshal(TPMT_PUBLIC_PARMS *source, BYTE **buffer, INT32 *size);
-#endif /* libtpms added */
     UINT16
     TPMT_PUBLIC_Marshal(TPMT_PUBLIC *source, BYTE **buffer, INT32 *size);
     UINT16

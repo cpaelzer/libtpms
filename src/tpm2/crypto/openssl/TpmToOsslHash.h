@@ -3,7 +3,7 @@
 /*		Used to splice the OpenSSL() hash code into the TPM code  	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslHash.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
+/*            $Id: TpmToOsslHash.h 1628 2020-05-27 19:35:29Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/ 
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -67,10 +67,13 @@
 #define HASH_LIB_OSSL
 #include <openssl/evp.h>
 #include <openssl/sha.h>
-#if ALG_SM3
+#if ALG_SM3_256
 #include <openssl/sm3.h>
 #endif
 #include <openssl/ossl_typ.h>
+
+#define HASH_ALIGNMENT  RADIX_BYTES  /* libtpms: keep; not sure whether needed */
+
 /* B.2.2.1.2. Links to the OpenSSL HASH code */
 /* Redefine the internal name used for each of the hash state structures to the name used by the
    library. These defines need to be known in all parts of the TPM so that the structure sizes can
@@ -99,7 +102,7 @@ typedef const BYTE    *PCBYTE;
 /* The macro that calls the method also defines how the parameters get swizzled between the default
    form (in CryptHash.c)and the library form. */
 
-#define HASH_ALIGNMENT  4 /* libtpms: keep old value */
+#define HASH_ALIGNMENT  RADIX_BYTES
 
 /* Initialize the hash context */
 #define HASH_START_METHOD_DEF   void (HASH_START_METHOD)(PANY_HASH_STATE state)

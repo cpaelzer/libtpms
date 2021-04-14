@@ -2,9 +2,9 @@ Source: libtpms
 Maintainer: Seunghun Han <kkamagui@gmail.com>
 Section: libs
 Priority: optional
-Standards-Version: 4.5.0
+Standards-Version: 4.5.1
 Rules-Requires-Root: no
-Build-Depends: debhelper-compat (= 13), dh-exec, gawk, libssl-dev, libtool
+Build-Depends: debhelper-compat (= 13), dh-exec, gawk, libssl-dev, libtool, pkg-config
 Homepage: https://github.com/stefanberger/libtpms
 Vcs-Git: https://salsa.debian.org/debian/libtpms.git
 Vcs-Browser: https://salsa.debian.org/debian/libtpms

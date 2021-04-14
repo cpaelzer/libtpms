@@ -3,7 +3,7 @@
 #
 # See the LICENSE file for the license associated with this file.
 
-AC_INIT([libtpms], [0.8.0])
+AC_INIT([libtpms], [0.8.2])
 AC_PREREQ(2.12)
 AC_CONFIG_SRCDIR(Makefile.am)
 AC_CONFIG_AUX_DIR([.])
@@ -12,6 +12,7 @@ AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign 1.6 subdir-objects])
+AM_SILENT_RULES([yes])
 
 LIBTPMS_VER_MAJOR=`echo $PACKAGE_VERSION | awk -F. '{print $1}'`
 LIBTPMS_VER_MINOR=`echo $PACKAGE_VERSION | awk -F. '{print $2}'`
@@ -66,7 +67,23 @@ m4_if(
 
 AM_CONDITIONAL([HAVE_VERSION_SCRIPT], [test "x$have_version_script" = "xyes"])
 
-cryptolib=freebl
+
+AC_ARG_WITH([tpm2],
+	AC_HELP_STRING([--with-tpm2],
+		       [build libtpms with TPM2 support]),
+	[],
+	[with_tpm2=yes]
+)
+AS_IF([test "x$with_tpm2" = xyes], [
+	AC_MSG_RESULT([Building with TPM2 support])
+	AC_DEFINE_UNQUOTED([WITH_TPM2], 1, [whether to support TPM2])
+	AM_CONDITIONAL(WITH_TPM2, true)
+	cryptolib=openssl
+], [
+	AM_CONDITIONAL(WITH_TPM2, false)
+	cryptolib=freebl
+])
+
 AC_SUBST(cryptolib, $cryptolib)
 
 AC_ARG_WITH([openssl],
@@ -123,6 +140,7 @@ freebl)
              [])
 	LIBS="$LIBS_save"
 	CFLAGS="$CFLAGS_save $CFLAGS"
+	enable_use_openssl_functions=no
 	;;
 openssl)
 	AM_CONDITIONAL(LIBTPMS_USE_FREEBL, false)
@@ -132,18 +150,6 @@ openssl)
                   [use openssl crypto library])
 	;;
 esac
-
-AC_ARG_WITH([tpm2],
-	AC_HELP_STRING([--with-tpm2],
-		       [build libtpms with TPM2 support (experimental)]),
-	AC_MSG_RESULT([Building with TPM2 support])
-	if test "x$cryptolib" = "xfreebl"; then
-		AC_MSG_ERROR([TPM2 support requires openssl crypto library])
-	fi
-	AC_DEFINE_UNQUOTED([WITH_TPM2], 1, [whether to support TPM2])
-	AM_CONDITIONAL(WITH_TPM2, true),
-	AM_CONDITIONAL(WITH_TPM2, false)
-)
 
 use_openssl_functions_for=""
 use_openssl_functions_symmetric=0
@@ -167,6 +173,7 @@ AS_IF([test "x$enable_use_openssl_functions" != "xno"], [
 	AC_CHECK_LIB([crypto], [EVP_des_ede3_cbc],, not_found=1)
 	AC_CHECK_LIB([crypto], [EVP_camellia_128_cbc],, not_found=1)
 	AC_CHECK_LIB([crypto], [DES_random_key],, not_found=1)
+	AC_CHECK_LIB([crypto], [EVP_CIPHER_CTX_iv],, not_found=1)
 	if test "x$not_found" = "x0"; then
 		use_openssl_functions_symmetric=1
 		use_openssl_functions_for="symmetric (AES, TDES) "
@@ -275,18 +282,31 @@ if test "x$enable_hardening" != "xno"; then
 	if test -z "$TMP1" && test -n "$TPM2"; then
 		HARDENING_CFLAGS="$HARDENING_CFLAGS -D_FORTIFY_SOURCE=2 "
 	fi
-	dnl Check ld for 'relro' and 'now'
-	if $LD --help 2>&1 | $GREP '\-z relro ' > /dev/null; then
-		HARDENING_LDFLAGS="$HARDENING_LDFLAGS -Wl,-z,relro "
-	fi
-	if $LD --help 2>&1 | $GREP '\-z now ' > /dev/null; then
-		HARDENING_LDFLAGS="$HARDENING_LDFLAGS -Wl,-z,now "
-	fi
+	dnl Check linker for 'relro' and 'now'
+	save_CFLAGS="$CFLAGS"
+	CFLAGS="-Wl,-z,relro -Werror"
+	AC_MSG_CHECKING([whether linker supports -Wl,-z,relro])
+	AC_LINK_IFELSE(
+		[AC_LANG_SOURCE([[int main() { return 0; }]])],
+		[HARDENING_LDFLAGS="$HARDENING_LDFLAGS -Wl,-z,relro"
+		 AC_MSG_RESULT(yes)],
+		[AC_MSG_RESULT(no)]
+	)
+	CFLAGS="-Wl,-z,now -Werror"
+	AC_MSG_CHECKING([whether linker supports -Wl,-z,now])
+	AC_LINK_IFELSE(
+		[AC_LANG_SOURCE([[int main() { return 0; }]])],
+		[HARDENING_LDFLAGS="$HARDENING_LDFLAGS -Wl,-z,now"
+		 AC_MSG_RESULT(yes)],
+		[AC_MSG_RESULT(no)]
+	)
+	CFLAGS="$save_CFLAGS"
 	AC_SUBST([HARDENING_CFLAGS])
 	AC_SUBST([HARDENING_LDFLAGS])
 fi
 
 CFLAGS="$CFLAGS $COVERAGE_CFLAGS -Wall -Werror -Wreturn-type -Wsign-compare -Wno-self-assign"
+CFLAGS="$CFLAGS -Wmissing-prototypes"
 LDFLAGS="$LDFLAGS $COVERAGE_LDFLAGS"
 
 AC_CONFIG_FILES(Makefile                   \
@@ -299,6 +319,7 @@ AC_CONFIG_FILES(Makefile                   \
 		src/Makefile               \
 		libtpms.pc                 \
 		tests/Makefile)
+PKG_INSTALLDIR()
 AC_OUTPUT
 
 if test -z "$enable_debug" ; then

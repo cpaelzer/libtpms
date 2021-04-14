@@ -3,7 +3,7 @@
 /*		DRBG with a behavior according to SP800-90A			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRand.c 1532 2019-11-26 14:28:36Z kgoldman $		*/
+/*            $Id: CryptRand.c 1603 2020-04-03 17:48:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -363,6 +363,7 @@ DRBG_Update(
     DRBG_KEY            *key = pDRBG_KEY(&drbgState->seed);
     DRBG_IV             *iv = pDRBG_IV(&drbgState->seed);
     DRBG_KEY_SCHEDULE    localKeySchedule;
+    memset(&localKeySchedule, 0, sizeof(localKeySchedule)); /* libtpms added: coverity */
     //
     pAssert(drbgState->magic == DRBG_MAGIC);
     // If an key schedule was not provided, make one
@@ -638,7 +639,9 @@ DRBG_InstantiateSeeded(
     return TPM_RC_SUCCESS;
 }
 /* 10.2.16.3.7 CryptRandStartup() */
-/* This function is called when TPM_Startup() is executed. This function always returns TRUE. */
+/* This function is called when TPM_Startup() is executed. */
+/* TRUE instantiation succeeded */	/* kgold */
+/* FALSE instantiation failed */
 LIB_EXPORT BOOL
 CryptRandStartup(
 		 void
@@ -646,18 +649,16 @@ CryptRandStartup(
 {
 #if ! _DRBG_STATE_SAVE
     // If not saved in NV, re-instantiate on each startup
-    return DRBG_Instantiate(&drbgDefault, 0, NULL);      // libtpms changed; return BOOL
+    return DRBG_Instantiate(&drbgDefault, 0, NULL);	/* kgold; libtpms return BOOL */
 #else
     // If the running state is saved in NV, NV has to be loaded before it can
     // be updated
     if(go.drbgState.magic == DRBG_MAGIC)
-	return DRBG_Reseed(&go.drbgState, NULL, NULL);   // libtpms changed; return BOOL
+	return DRBG_Reseed(&go.drbgState, NULL, NULL);		/* kgold; libtpms return BOOL */
     else
-	return DRBG_Instantiate(&go.drbgState, 0, NULL); // libtpms changed; return BOOL
+	return DRBG_Instantiate(&go.drbgState, 0, NULL);	/* kgold; libtpms return BOOL */
 #endif
-#if 0
     return TRUE;
-#endif
 }
 /* 10.2.16.3.8 CryptRandInit() */
 /* This function is called when _TPM_Init() is being processed */
@@ -783,6 +784,7 @@ DRBG_Generate(
 	    DRBG_STATE          *drbgState = (DRBG_STATE *)state;
 	    DRBG_KEY_SCHEDULE    keySchedule;
 	    DRBG_SEED           *seed = &drbgState->seed;
+	    memset(&keySchedule, 0, sizeof(keySchedule)); /* libtpms added: coverity */
 	    if(drbgState->reseedCounter >= CTR_DRBG_MAX_REQUESTS_PER_RESEED)
 		{
 		    if(drbgState == &drbgDefault)

@@ -3,7 +3,7 @@
 /*			     Symmetric block cipher modes			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptSym.c 1476 2019-06-10 19:32:03Z kgoldman $		*/
+/*            $Id: CryptSym.c 1594 2020-03-26 22:15:48Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -123,7 +123,7 @@ CryptGetSymmetricBlockSize(
 {
     const INT16    *sizes;
     INT16            i;
-#define ALG_CASE(SYM, sym)  case ALG_##SYM##_VALUE: sizes = sym##KeyBlockSizes; break
+#define ALG_CASE(SYM, sym)  case TPM_ALG_##SYM: sizes = sym##KeyBlockSizes; break
     switch(symmetricAlg)
 	{
 #if ALG_AES
@@ -532,6 +532,7 @@ CryptSymmetricEncrypt(
     BYTE                 keyToUse[MAX_SYM_KEY_BYTES];
     UINT16               keyToUseLen = (UINT16)sizeof(keyToUse);
     TPM_RC               retVal = TPM_RC_SUCCESS;
+    int                  ivLen;
 
     pAssert(dOut != NULL && key != NULL && dIn != NULL);
     if(dSize == 0)
@@ -596,6 +597,14 @@ CryptSymmetricEncrypt(
     if (EVP_EncryptFinal_ex(ctx, pOut + outlen1, &outlen2) != 1)
         ERROR_RETURN(TPM_RC_FAILURE);
 
+    if (ivInOut) {
+        ivLen = EVP_CIPHER_CTX_iv_length(ctx);
+        if (ivLen < 0 || (size_t)ivLen > sizeof(ivInOut->t.buffer))
+            ERROR_RETURN(TPM_RC_FAILURE);
+
+        ivInOut->t.size = ivLen;
+        memcpy(ivInOut->t.buffer, EVP_CIPHER_CTX_iv(ctx), ivInOut->t.size);
+    }
  Exit:
     if (retVal == TPM_RC_SUCCESS && pOut != dOut)
         memcpy(dOut, pOut, outlen1 + outlen2);
@@ -632,12 +641,12 @@ CryptSymmetricDecrypt(
     EVP_CIPHER_CTX      *ctx = NULL;
     int                  outlen1 = 0;
     int                  outlen2 = 0;
-    BYTE                *pOut = dOut;
-    BYTE                *buffer = NULL;
+    BYTE                *buffer;
     UINT32               buffersize = 0;
     BYTE                 keyToUse[MAX_SYM_KEY_BYTES];
     UINT16               keyToUseLen = (UINT16)sizeof(keyToUse);
     TPM_RC               retVal = TPM_RC_SUCCESS;
+    int                  ivLen;
 
     // These are used but the compiler can't tell because they are initialized
     // in case statements and it can't tell if they are always initialized
@@ -661,23 +670,35 @@ CryptSymmetricDecrypt(
     else
 	iv = defaultIv;
 
+    switch(mode)
+	{
+#if ALG_CBC || ALG_ECB
+	  case ALG_CBC_VALUE:
+	  case ALG_ECB_VALUE:
+	    // For ECB and CBC, the data size must be an even multiple of the
+	    // cipher block size
+	    if((dSize % blockSize) != 0)
+		return TPM_RC_SIZE;
+	    break;
+#endif
+	  default:
+	    break;
+	}
+
     evpfn = GetEVPCipher(algorithm, keySizeInBits, mode, key,
                          keyToUse, &keyToUseLen);
     if (evpfn ==  NULL)
         return TPM_RC_FAILURE;
 
-    if (dIn == dOut) {
-        // in-place encryption; we use a temp buffer
-        buffersize = TPM2_ROUNDUP(dSize, blockSize);
-        buffer = malloc(buffersize);
-        if (buffer == NULL)
-            ERROR_RETURN(TPM_RC_FAILURE);
-        pOut = buffer;
-    }
+    /* a buffer with a 'safety margin' for EVP_DecryptUpdate */
+    buffersize = TPM2_ROUNDUP(dSize + blockSize, blockSize);
+    buffer = malloc(buffersize);
+    if (buffer == NULL)
+        ERROR_RETURN(TPM_RC_FAILURE);
 
 #if ALG_TDES && ALG_CTR
     if (algorithm == TPM_ALG_TDES && mode == ALG_CTR_VALUE) {
-        TDES_CTR(keyToUse, keyToUseLen * 8, dSize, dIn, iv, pOut, blockSize);
+        TDES_CTR(keyToUse, keyToUseLen * 8, dSize, dIn, iv, buffer, blockSize);
         outlen1 = dSize;
         ERROR_RETURN(TPM_RC_SUCCESS);
     }
@@ -686,17 +707,32 @@ CryptSymmetricDecrypt(
     ctx = EVP_CIPHER_CTX_new();
     if (!ctx ||
         EVP_DecryptInit_ex(ctx, evpfn(), NULL, keyToUse, iv) != 1 ||
-        EVP_DecryptUpdate(ctx, pOut, &outlen1, dIn, dSize) != 1)
+        EVP_CIPHER_CTX_set_padding(ctx, 0) != 1 ||
+        EVP_DecryptUpdate(ctx, buffer, &outlen1, dIn, dSize) != 1)
         ERROR_RETURN(TPM_RC_FAILURE);
 
-    pAssert(outlen1 <= dSize || dSize >= outlen1 + blockSize);
+    pAssert((int)buffersize >= outlen1);
 
-    if (EVP_DecryptFinal(ctx, pOut + outlen1, &outlen2) != 1)
+    if ((int)buffersize <= outlen1 /* coverity */ ||
+        EVP_DecryptFinal(ctx, &buffer[outlen1], &outlen2) != 1)
         ERROR_RETURN(TPM_RC_FAILURE);
+
+    pAssert((int)buffersize >= outlen1 + outlen2);
+
+    if (ivInOut) {
+        ivLen = EVP_CIPHER_CTX_iv_length(ctx);
+        if (ivLen < 0 || (size_t)ivLen > sizeof(ivInOut->t.buffer))
+            ERROR_RETURN(TPM_RC_FAILURE);
+
+        ivInOut->t.size = ivLen;
+        memcpy(ivInOut->t.buffer, EVP_CIPHER_CTX_iv(ctx), ivInOut->t.size);
+    }
 
  Exit:
-    if (retVal == TPM_RC_SUCCESS && pOut != dOut)
-        memcpy(dOut, pOut, outlen1 + outlen2);
+    if (retVal == TPM_RC_SUCCESS) {
+        pAssert(dSize >= outlen1 + outlen2);
+        memcpy(dOut, buffer, outlen1 + outlen2);
+    }
 
     clear_and_free(buffer, buffersize);
     EVP_CIPHER_CTX_free(ctx);

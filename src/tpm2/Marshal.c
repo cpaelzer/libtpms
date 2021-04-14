@@ -3,7 +3,7 @@
 /*			  Parameter Marshaling   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Marshal.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: Marshal.c 1636 2020-06-12 22:22:37Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -194,9 +194,9 @@ TPM_KEY_BITS_Marshal(TPM_KEY_BITS *source, BYTE **buffer, INT32 *size)
     return written;
 }
    
-/* Table 2:7 - Definition of TPM_GENERATED Constants (EnumTable()) */
+/* Table 2:7 - Definition of TPM_CONSTANTS32 Constants (EnumTable()) */
 UINT16
-TPM_GENERATED_Marshal(TPM_GENERATED *source, BYTE **buffer, INT32 *size)
+TPM_CONSTANTS32_Marshal(TPM_CONSTANTS32 *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += UINT32_Marshal(source, buffer, size);
@@ -352,6 +352,16 @@ TPMI_YES_NO_Marshal(TPMI_YES_NO *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += UINT8_Marshal(source, buffer, size);
+    return written;
+}
+
+/* Table 40 - Definition of (UINT32) TPMA_ACT Bits */
+
+UINT16
+TPMA_ACT_Marshal(TPMA_ACT *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    written += UINT32_Marshal((UINT32 *)source, buffer, size);
     return written;
 }
 
@@ -678,6 +688,19 @@ TPMS_TAGGED_POLICY_Marshal(TPMS_TAGGED_POLICY *source, BYTE **buffer, INT32 *siz
     return written;
 }
 
+/* Table 105 - Definition of TPMS_ACT_DATA Structure <OUT> */
+
+UINT16
+TPMS_ACT_DATA_Marshal(TPMS_ACT_DATA *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+
+    written += TPM_HANDLE_Marshal(&source->handle, buffer, size);
+    written += UINT32_Marshal(&source->timeout, buffer, size);
+    written += TPMA_ACT_Marshal(&source->attributes, buffer, size);
+    return written;
+}
+
 /* Table 2:94 - Definition of TPMS_TAGGED_PROPERTY Structure (StructuresTable()) */
 
 UINT16
@@ -872,6 +895,21 @@ TPML_TAGGED_POLICY_Marshal(TPML_TAGGED_POLICY *source, BYTE **buffer, INT32 *siz
     return written;
 }
  
+/* Table 2:118 - Definition of TPML_ACT_DATA Structure (StructuresTable()) */
+
+UINT16
+TPML_ACT_DATA_Marshal(TPML_ACT_DATA *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    UINT32 i;
+
+    written += UINT32_Marshal(&source->count, buffer, size);
+    for (i = 0 ; i < source->count ; i++) {
+	written += TPMS_ACT_DATA_Marshal(&source->actData[i], buffer, size);
+    }
+    return written;
+}
+
 /* Table 2:110 - Definition of TPMU_CAPABILITIES Union (StructuresTable()) */
 
 UINT16
@@ -909,6 +947,9 @@ TPMU_CAPABILITIES_Marshal(TPMU_CAPABILITIES *source, BYTE **buffer, INT32 *size,
 	break;
       case TPM_CAP_AUTH_POLICIES:
 	written += TPML_TAGGED_POLICY_Marshal(&source->authPolicies, buffer, size);
+	break;
+      case TPM_CAP_ACT:
+	written += TPML_ACT_DATA_Marshal(&source->actData, buffer, size);
 	break;
       default:
 	pAssert(FALSE);
@@ -1106,7 +1147,7 @@ TPMS_ATTEST_Marshal(TPMS_ATTEST  *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
 
-    written += TPM_GENERATED_Marshal(&source->magic, buffer, size);
+    written += TPM_CONSTANTS32_Marshal(&source->magic, buffer, size);
     written += TPMI_ST_ATTEST_Marshal(&source->type, buffer, size);
     written += TPM2B_NAME_Marshal(&source->qualifiedSigner, buffer, size);
     written += TPM2B_DATA_Marshal(&source->extraData, buffer, size);
@@ -1373,6 +1414,13 @@ TPMS_SIG_SCHEME_ECDSA_Marshal(TPMS_SIG_SCHEME_ECDSA *source, BYTE **buffer, INT3
     return written;
 }
 UINT16
+TPMS_SIG_SCHEME_SM2_Marshal(TPMS_SIG_SCHEME_SM2 *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
+    return written;
+}
+UINT16
 TPMS_SIG_SCHEME_ECSCHNORR_Marshal(TPMS_SIG_SCHEME_ECSCHNORR *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
@@ -1386,15 +1434,6 @@ TPMS_SIG_SCHEME_ECDAA_Marshal(TPMS_SIG_SCHEME_ECDAA *source, BYTE **buffer, INT3
     written += TPMS_SCHEME_ECDAA_Marshal(source, buffer, size);
     return written;
 }
-/* libtpms added begin */
-UINT16
-TPMS_SIG_SCHEME_SM2_Marshal(TPMS_SIG_SCHEME_SM2 *source, BYTE **buffer, INT32 *size)
-{
-    UINT16 written = 0;
-    written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
-    return written;
-}
-/* libtpms added end */
 
 /* Table 2:153 - Definition of Types for Encryption Schemes (TypedefTable()) */
 
@@ -1463,28 +1502,28 @@ TPMS_KEY_SCHEME_ECMQV_Marshal(TPMS_KEY_SCHEME_ECMQV*source, BYTE **buffer, INT32
 
 /* Table 2:155 - Definition of Types for KDF Schemes (TypedefTable()) */
 UINT16
-TPMS_SCHEME_MGF1_Marshal(TPMS_SCHEME_MGF1 *source, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_MGF1_Marshal(TPMS_KDF_SCHEME_MGF1 *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
     return written;
 }
 UINT16
-TPMS_SCHEME_KDF1_SP800_56A_Marshal(TPMS_SCHEME_KDF1_SP800_56A *source, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF1_SP800_56A_Marshal(TPMS_KDF_SCHEME_KDF1_SP800_56A *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
     return written;
 }
 UINT16
-TPMS_SCHEME_KDF2_Marshal(TPMS_SCHEME_KDF2 *source, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF2_Marshal(TPMS_KDF_SCHEME_KDF2 *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
     return written;
 }
 UINT16
-TPMS_SCHEME_KDF1_SP800_108_Marshal(TPMS_SCHEME_KDF1_SP800_108 *source, BYTE **buffer, INT32 *size)
+TPMS_KDF_SCHEME_KDF1_SP800_108_Marshal(TPMS_KDF_SCHEME_KDF1_SP800_108 *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += TPMS_SCHEME_HASH_Marshal(source, buffer, size);
@@ -1502,22 +1541,22 @@ TPMU_KDF_SCHEME_Marshal(TPMU_KDF_SCHEME *source, BYTE **buffer, INT32 *size, UIN
     switch (selector) {
 #if ALG_MGF1
       case TPM_ALG_MGF1:
-	written += TPMS_SCHEME_MGF1_Marshal(&source->mgf1, buffer, size);
+	written += TPMS_KDF_SCHEME_MGF1_Marshal(&source->mgf1, buffer, size);
 	break;
 #endif
 #if ALG_KDF1_SP800_56A
       case TPM_ALG_KDF1_SP800_56A:
-	written += TPMS_SCHEME_KDF1_SP800_56A_Marshal(&source->kdf1_sp800_56a, buffer, size);
+	written += TPMS_KDF_SCHEME_KDF1_SP800_56A_Marshal(&source->kdf1_sp800_56a, buffer, size);
 	break;
 #endif
 #if ALG_KDF2
       case TPM_ALG_KDF2:
-	written += TPMS_SCHEME_KDF2_Marshal(&source->kdf2, buffer, size);
+	written += TPMS_KDF_SCHEME_KDF2_Marshal(&source->kdf2, buffer, size);
 	break;
 #endif
 #if ALG_KDF1_SP800_108
       case TPM_ALG_KDF1_SP800_108:
-	written += TPMS_SCHEME_KDF1_SP800_108_Marshal(&source->kdf1_sp800_108, buffer, size);
+	written += TPMS_KDF_SCHEME_KDF1_SP800_108_Marshal(&source->kdf1_sp800_108, buffer, size);
 	break;
 #endif
       case TPM_ALG_NULL:
@@ -1814,7 +1853,6 @@ TPMS_SIGNATURE_ECDAA_Marshal(TPMS_SIGNATURE_ECDAA *source, BYTE **buffer, INT32 
     return written;
 }
 
-/* libtpms added begin */
 UINT16
 TPMS_SIGNATURE_SM2_Marshal(TPMS_SIGNATURE_SM2 *source, BYTE **buffer, INT32 *size)
 {
@@ -1822,7 +1860,6 @@ TPMS_SIGNATURE_SM2_Marshal(TPMS_SIGNATURE_SM2 *source, BYTE **buffer, INT32 *siz
     written += TPMS_SIGNATURE_ECC_Marshal(source, buffer, size);
     return written;
 }
-/* libtpms added end */
 
 UINT16
 TPMS_SIGNATURE_ECSCHNORR_Marshal(TPMS_SIGNATURE_ECSCHNORR *source, BYTE **buffer, INT32 *size)
@@ -2219,7 +2256,7 @@ UINT16
 TPM2B_CREATION_DATA_Marshal(TPM2B_CREATION_DATA *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
-    BYTE *sizePtr;
+    BYTE *sizePtr = NULL; // libtpms added for s390x on Fedora 32
 
     if (buffer != NULL) {
 	sizePtr = *buffer;

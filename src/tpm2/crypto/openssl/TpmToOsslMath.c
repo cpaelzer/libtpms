@@ -3,7 +3,7 @@
 /*			 TPM to OpenSSL BigNum Shim Layer			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslMath.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: TpmToOsslMath.c 1598 2020-03-27 21:59:49Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -82,13 +82,6 @@
 #ifdef MATH_LIB_OSSL
 #include "TpmToOsslMath_fp.h"
 
-#if 0		// libtpms added
-#if OPENSSL_VERSION_NUMBER < 0x10101000		/* kgold */
-#define EC_POINT_set_affine_coordinates(a,b,c,d,e)  EC_POINT_set_affine_coordinates_GFp(a,b,c,d,e)
-#define EC_POINT_get_affine_coordinates(a,b,c,d,e)  EC_POINT_get_affine_coordinates_GFp(a,b,c,d,e)
-#endif
-#endif		// libtpms added
-
 /* B.2.3.2.3.1.	OsslToTpmBn() */
 /* This function converts an OpenSSL BIGNUM to a TPM bignum. In this implementation it is assumed
    that OpenSSL uses a different control structure but the same data layout -- an array of
@@ -111,8 +104,10 @@ OsslToTpmBn(
     if(bn != NULL)
 	{
 #if 1 //libtpms added begin
-	    VERIFY(BN_num_bytes(osslBn) >= 0);
-	    VERIFY(sizeof(buffer) >= (size_t)BN_num_bytes(osslBn));
+	    int num_bytes;
+
+	    num_bytes = BN_num_bytes(osslBn);
+	    VERIFY(num_bytes >= 0 && sizeof(buffer) >= (size_t)num_bytes);
 	    buffer_len = BN_bn2bin(osslBn, buffer);	/* ossl to bin */
 	    BnFromBytes(bn, buffer, buffer_len);	/* bin to TPM */
 #else // libtpms added end
@@ -153,6 +148,7 @@ BigInitialized(
 #if 1  // libtpms added begin
     BnToBytes(initializer, buffer, &buffer_len);	/* TPM to bin */
     _toInit = BN_bin2bn(buffer, buffer_len, NULL);	/* bin to ossl */
+    BN_set_flags(_toInit, BN_FLG_CONSTTIME);
     BN_copy(toInit, _toInit);
     BN_clear_free(_toInit);
 #else  // libtpms added end
@@ -397,6 +393,7 @@ BnGcd(
     BIG_INITIALIZED(bn1, number1);
     BIG_INITIALIZED(bn2, number2);
     //
+    BN_set_flags(bn1, BN_FLG_CONSTTIME); // number1 is secret prime number
     VERIFY(BN_gcd(bnGcd, bn1, bn2, CTX));
     VERIFY(OsslToTpmBn(gcd, bnGcd));
     goto Exit;
@@ -432,6 +429,7 @@ BnModExp(
     BIG_INITIALIZED(bnE, exponent);
     BIG_INITIALIZED(bnM, modulus);
     //
+    BN_set_flags(bnE, BN_FLG_CONSTTIME); // exponent may be private
     VERIFY(BN_mod_exp(bnResult, bnN, bnE, bnM, CTX));
     VERIFY(OsslToTpmBn(result, bnResult));
     goto Exit;
@@ -464,6 +462,7 @@ BnModInverse(
     BIG_INITIALIZED(bnN, number);
     BIG_INITIALIZED(bnM, modulus);
     //
+    BN_set_flags(bnN, BN_FLG_CONSTTIME); // number may be private
     VERIFY(BN_mod_inverse(bnResult, bnN, bnM, CTX) != NULL);
     VERIFY(OsslToTpmBn(result, bnResult));
     goto Exit;
@@ -533,9 +532,9 @@ EcPointInitialized(
 	{
 	    BIG_INITIALIZED(bnX, initializer->x);
 	    BIG_INITIALIZED(bnY, initializer->y);
-	    if(E == NULL)		// libtpms changed begin (check E before accessing)
+	    if(E == NULL)
 		FAIL(FATAL_ERROR_ALLOCATION);
-	    P = EC_POINT_new(E->G);	// libtpms changed end
+	    P = EC_POINT_new(E->G);
 #if defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x10200000L	// libtpms added begin
 	    if(!EC_POINT_set_affine_coordinates(E->G, P, bnX, bnY, E->CTX))
 #else									// libtpms added end

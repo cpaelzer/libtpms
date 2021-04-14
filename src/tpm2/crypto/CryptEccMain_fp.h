@@ -173,6 +173,8 @@ BnEccGetPrivate(
 		const ECC_CURVE_DATA    *C,         // IN: curve for which the private key
 #if USE_OPENSSL_FUNCTIONS_EC
 		const EC_GROUP          *G,         // IN: the EC_GROUP to use; must be != NULL for rand == NULL
+		BOOL                     noLeadingZeros, // IN: require that all bytes in the private key be set
+                                                         //     result may not have leading zero bytes
 #endif
 		//     needs to be appropriate
 		RAND_STATE              *rand       // IN: state for DRBG
@@ -220,5 +222,11 @@ CryptEccGenerateKey(
 		    //     RNG state
 		    );
 
+// 		libtpms added begin
+LIB_EXPORT BOOL
+CryptEccIsCurveRuntimeUsable(
+			     TPMI_ECC_CURVE curveId
+			    );
+//		libtpms added end
 
 #endif

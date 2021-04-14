@@ -61,6 +61,7 @@
 
 #include "tpm_crypto.h"
 
+#include "tpm_openssl_helpers.h" // libtpms added
 
 /* The TPM OAEP encoding parameter */
 static const unsigned char tpm_oaep_pad_str[] = { 'T', 'C', 'P', 'A' };
@@ -539,6 +540,7 @@ static TPM_RESULT TPM_RSAGeneratePrivateToken(RSA **rsa_pri_key,	/* freed by cal
 	(*rsa_pri_key)->n = n;
         (*rsa_pri_key)->e = e;
 	(*rsa_pri_key)->d = d;
+	BN_set_flags(d, BN_FLG_CONSTTIME); // d is private
 #else
 	int irc = RSA_set0_key(*rsa_pri_key, n, e, d);
 	if (irc != 1) {
@@ -550,6 +552,7 @@ static TPM_RESULT TPM_RSAGeneratePrivateToken(RSA **rsa_pri_key,	/* freed by cal
     return rc;
 }
 
+#if !USE_OPENSSL_FUNCTIONS_RSA // libtpms added
 /* TPM_RSAPrivateDecrypt() decrypts 'encrypt_data' using the private key 'n, e, d'.  The OAEP
    padding is removed and 'decrypt_data_length' bytes are moved to 'decrypt_data'.
 
@@ -658,9 +661,136 @@ TPM_RESULT TPM_RSAPrivateDecrypt(unsigned char *decrypt_data,   /* decrypted dat
     return rc;
 }
 
+#else // libtpms added begin
+
+TPM_RESULT TPM_RSAPrivateDecrypt(unsigned char *decrypt_data,   /* decrypted data */
+                                 uint32_t *decrypt_data_length,	/* length of data put into
+                                                                   decrypt_data */
+                                 size_t decrypt_data_size,      /* size of decrypt_data buffer */
+                                 TPM_ENC_SCHEME encScheme,      /* encryption scheme */
+                                 unsigned char *encrypt_data,   /* encrypted data */
+                                 uint32_t encrypt_data_size,
+                                 unsigned char *narr,           /* public modulus */
+                                 uint32_t nbytes,
+                                 unsigned char *earr,           /* public exponent */
+                                 uint32_t ebytes,
+                                 unsigned char *darr,           /* private exponent */
+                                 uint32_t dbytes)
+{
+    TPM_RESULT             rc = 0;
+    EVP_PKEY              *pkey = NULL;
+    EVP_PKEY_CTX          *ctx = NULL;
+    const EVP_MD          *md = NULL;
+    unsigned char         *label = NULL;
+    size_t                 outlen;
+    unsigned char          buffer[(TPM_RSA_KEY_LENGTH_MAX + 7) / 8];
+
+    printf(" TPM_RSAPrivateDecrypt:\n");
+    /* construct the OpenSSL private key object */
+    if (rc == 0) {
+	rc = TPM_RSAGenerateEVP_PKEY(&pkey,	/* freed @1 */
+				     narr,      	/* public modulus */
+				     nbytes,
+				     earr,      	/* public exponent */
+				     ebytes,
+				     darr,		/* private exponent */
+				     dbytes);
+    }
+
+    if (rc == 0) {
+        ctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (ctx == 0) {
+            printf("TPM_RSAPrivateDecrypt: Error in EVP_PKEY_CTX_new()\n");
+            rc = TPM_FAIL;
+        }
+    }
+    if (rc == 0) {
+        if (EVP_PKEY_decrypt_init(ctx) <= 0) {
+            printf("TPM_RSAPrivateDecrypt: Error in EVP_PKEY_decrypt_init()\n");
+            rc = TPM_FAIL;
+        }
+    }
+
+    if (rc == 0) {
+        switch (encScheme) {
+        case TPM_ES_RSAESOAEP_SHA1_MGF1:
+            if (rc == 0) {
+                md = EVP_get_digestbyname("sha1");
+                if (md == NULL ||
+                    EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0 ||
+                    EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md) <= 0) {
+                    printf("TPM_RSAPrivateDecrypt: Error in setting up decrypt context for TPM_ES_RSAESOAEP_SHA1_MGF\n");
+                    rc = TPM_FAIL;
+                }
+            }
+            if (rc == 0) {
+                rc = TPM_Malloc(&label, sizeof(tpm_oaep_pad_str));
+                if (rc) {
+                    printf("TPM_RSAPrivateDecrypt: TPM_Malloc failed\n");
+                }
+            }
+            if (rc == 0) {
+                memcpy(label, tpm_oaep_pad_str, sizeof(tpm_oaep_pad_str));
+                if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label, sizeof(tpm_oaep_pad_str)) <= 0) {
+                    printf("TPM_RSAPrivateDecrypt: EVP_PKEY_CTX_set0_rsa_oaep_label() failed\n");
+                    rc = TPM_FAIL;
+                }
+                if (rc == 0) {
+                    label = NULL;
+                }
+            }
+            break;
+        case TPM_ES_RSAESPKCSv15:
+            if (rc == 0) {
+                if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0) {
+                    printf("TPM_RSAPrivateDecrypt: Error in setting up decrypt context for TPM_ES_RSAESPKCSv15\n");
+                    rc = TPM_FAIL;
+                }
+            }
+            break;
+        default:
+            if (rc == 0) {
+                printf("TPM_RSAPrivateDecrypt: Error, unknown encryption scheme %04x\n", encScheme);
+                rc = TPM_INAPPROPRIATE_ENC;
+            }
+        }
+    }
+
+    if (rc == 0) {
+        outlen = sizeof(buffer);
+        if (EVP_PKEY_decrypt(ctx, buffer, &outlen,
+                             encrypt_data, encrypt_data_size) <= 0) {
+            printf("TPM_RSAPrivateDecrypt: EVP_PKEY_decrypt failed\n");
+            rc = TPM_DECRYPT_ERROR;
+        }
+        if (rc == 0) {
+            if (outlen > decrypt_data_size) {
+                printf("TPM_RSAPrivateDecrypt: Error, decrypt_data_size %u too small for message size %u\n",
+                       decrypt_data_size, outlen);
+                rc = TPM_DECRYPT_ERROR;
+            }
+        }
+        if (rc == 0) {
+            *decrypt_data_length = (uint32_t)outlen;
+            memcpy(decrypt_data, buffer, outlen);
+            TPM_PrintFourLimit("  TPM_RSAPrivateDecrypt: Decrypt data", decrypt_data, *decrypt_data_length);
+        }
+    }
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    TPM_Free(label);
+
+    return rc;
+}
+
+#endif // libtpms added end
+
 /* TPM_RSAPublicEncrypt() pads 'decrypt_data' to 'encrypt_data_size' and encrypts using the public
    key 'n, e'.
 */
+
+#if !USE_OPENSSL_FUNCTIONS_RSA // libtpms added
 
 TPM_RESULT TPM_RSAPublicEncrypt(unsigned char* encrypt_data,    /* encrypted data */
                                 size_t encrypt_data_size,       /* size of encrypted data buffer */
@@ -752,7 +882,116 @@ TPM_RESULT TPM_RSAPublicEncrypt(unsigned char* encrypt_data,    /* encrypted dat
     return rc;
 }
 
-#if 0
+#else // libtpms added begin
+
+TPM_RESULT TPM_RSAPublicEncrypt(unsigned char* encrypt_data,    /* encrypted data */
+                                size_t encrypt_data_size,       /* size of encrypted data buffer */
+                                TPM_ENC_SCHEME encScheme,
+                                const unsigned char *decrypt_data,      /* decrypted data */
+                                size_t decrypt_data_size,
+                                unsigned char *narr,           /* public modulus */
+                                uint32_t nbytes,
+                                unsigned char *earr,           /* public exponent */
+                                uint32_t ebytes)
+{
+    TPM_RESULT  rc = 0;
+    EVP_PKEY              *pkey = NULL;
+    EVP_PKEY_CTX          *ctx = NULL;
+    const EVP_MD          *md = NULL;
+    unsigned char         *label = NULL;
+    size_t                 outlen;
+
+    printf(" TPM_RSAPublicEncrypt: Input data size %lu\n", (unsigned long)decrypt_data_size);
+
+    /* construct the OpenSSL private key object */
+    if (rc == 0) {
+	rc = TPM_RSAGenerateEVP_PKEY(&pkey,	/* freed @1 */
+				     narr,      	/* public modulus */
+				     nbytes,
+				     earr,      	/* public exponent */
+				     ebytes,
+				     NULL,		/* private exponent */
+				     0);
+    }
+
+    if (rc == 0) {
+        ctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (ctx == 0) {
+            printf("TPM_RSAqPrivateDecrypt: Error in EVP_PKEY_CTX_new()\n");
+            rc = TPM_FAIL;
+        }
+    }
+    if (rc == 0) {
+        if (EVP_PKEY_encrypt_init(ctx) <= 0) {
+            printf("TPM_RSAPrivateDecrypt: Error in EVP_PKEY_decrypt_init()\n");
+            rc = TPM_FAIL;
+        }
+    }
+
+    if (rc == 0) {
+        switch (encScheme) {
+        case TPM_ES_RSAESOAEP_SHA1_MGF1:
+            if (rc == 0) {
+                md = EVP_get_digestbyname("sha1");
+                if (md == NULL ||
+                    EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0 ||
+                    EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md) <= 0) {
+                    printf("TPM_RSAPublicEncrypt: Error in setting up encrypt context for TPM_ES_RSAESOAEP_SHA1_MGF\n");
+                    rc = TPM_FAIL;
+                }
+            }
+            if (rc == 0) {
+                rc = TPM_Malloc(&label, sizeof(tpm_oaep_pad_str));
+                if (rc) {
+                    printf("TPM_RSAPublicEncrypt: TPM_Malloc failed\n");
+                }
+            }
+            if (rc == 0) {
+                memcpy(label, tpm_oaep_pad_str, sizeof(tpm_oaep_pad_str));
+                if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label, sizeof(tpm_oaep_pad_str)) <= 0) {
+                    printf("TPM_RSAPublicEncrypt: EVP_PKEY_CTX_set0_rsa_oaep_label() failed\n");
+                    rc = TPM_FAIL;
+                }
+                if (rc == 0) {
+                    label = NULL;
+                }
+            }
+            break;
+        case TPM_ES_RSAESPKCSv15:
+            if (rc == 0) {
+                if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0) {
+                    printf("TPM_RSAPublicEncrypt: Error in setting up encrypt context for TPM_ES_RSAESPKCSv15\n");
+                    rc = TPM_FAIL;
+                }
+            }
+            break;
+        default:
+            if (rc == 0) {
+                printf("TPM_RSAPublicEncrypt: Error, unknown encryption scheme %04x\n", encScheme);
+                rc = TPM_INAPPROPRIATE_ENC;
+            }
+        }
+    }
+
+    if (rc == 0) {
+        outlen = encrypt_data_size;
+        if (EVP_PKEY_encrypt(ctx, encrypt_data, &outlen,
+                             decrypt_data, decrypt_data_size) <= 0) {
+            printf("TPM_RSAPublicEncrypt: EVP_PKEY_encrypt failed\n");
+            rc = TPM_ENCRYPT_ERROR;
+        }
+    }
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    TPM_Free(label);
+
+    return rc;
+}
+
+#endif // libtpms added end
+
+#if USE_FREEBL_CRYPTO_LIBRARY
 /* TPM_RSAPublicEncryptRaw() does a raw public key operation without any padding.
 
 */
@@ -829,6 +1068,15 @@ TPM_RESULT TPM_RSAPublicEncryptRaw(unsigned char *encrypt_data,	/* output */
 
    'signature_length' bytes are moved to 'signature'.  'signature_length' is at most
    'signature_size'.  signature must point to RSA_size(rsa) bytes of memory.
+*/
+/* Note regarding conversion to EVP_PKEY_sign for the purpose of constant-timeness:
+
+  - TPM_SS_RSASSAPKCS1v15_SHA1:
+      EVP_PKEY_sign() will call pkey_rsa_sign() which in turn will call RSA_sign() for
+      RSA_PKCS1_PADDING. This is the same as we do here.
+  - TPM_SS_RSASSAPKCS1v15_DER:
+      EVP_PKEY_sign() must not have a message digest since none of the padding choices calls
+      RSA_padding_add_PKCS1_type_1(), so we would have to do the padding again ourselves.
 */
 
 TPM_RESULT TPM_RSASign(unsigned char *signature,        /* output */
@@ -1150,6 +1398,8 @@ TPM_RESULT TPM_RSAGetPrivateKey(uint32_t *qbytes, unsigned char **qarr,
     }
     if (rc == 0) {
         rc = TPM_bin2bn((TPM_BIGNUM *)&p, parr, pbytes);	/* freed @3 */
+        if (p)
+             BN_set_flags(p, BN_FLG_CONSTTIME); // p is private
     }
     /* calculate q = n/p */
     if (rc == 0) {
@@ -1158,7 +1408,8 @@ TPM_RESULT TPM_RSAGetPrivateKey(uint32_t *qbytes, unsigned char **qarr,
             printf("TPM_RSAGetPrivateKey: Error in BN_div()\n");
             TPM_OpenSSL_PrintError();
             rc = TPM_BAD_PARAMETER;
-        }
+        } else
+            BN_set_flags(q, BN_FLG_CONSTTIME); // q is private
     }
     /* remainder should be zero */
     if (rc == 0) {
@@ -1193,7 +1444,8 @@ TPM_RESULT TPM_RSAGetPrivateKey(uint32_t *qbytes, unsigned char **qarr,
             printf("TPM_RSAGetPrivateKey: Error in BN_mul()\n");
             TPM_OpenSSL_PrintError();
             rc = TPM_BAD_PARAMETER;
-        }
+        } else
+            BN_set_flags(r2, BN_FLG_CONSTTIME); // r2 is private
     }
     /* calculate d  = multiplicative inverse e mod r0 */
     if (rc == 0) {
@@ -1543,6 +1795,7 @@ TPM_RESULT TPM_BN_mod_exp(TPM_BIGNUM rBignum_in,
     */
     if (rc == 0) {
         printf("  TPM_BN_mod_exp: Calculate mod_exp\n");
+        BN_set_flags(pBignum, BN_FLG_CONSTTIME); // p may be private
         irc = BN_mod_exp(rBignum, aBignum, pBignum, nBignum, ctx);
         if (irc != 1) {
             printf("TPM_BN_mod_exp: Error performing BN_mod_exp()\n");

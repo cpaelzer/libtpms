@@ -67,6 +67,11 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 
+/* to enable RSA_check_key() on private keys set to != 0 */
+#ifndef DO_RSA_CHECK_KEY
+#define DO_RSA_CHECK_KEY 0
+#endif
+
 #if USE_OPENSSL_FUNCTIONS_SYMMETRIC
 
 TPM_RC
@@ -272,12 +277,17 @@ evpfunc GetEVPCipher(TPM_ALG_ID    algorithm,       // IN
 BOOL
 OpenSSLEccGetPrivate(
                      bigNum             dOut,  // OUT: the qualified random value
-                     const EC_GROUP    *G      // IN:  the EC_GROUP to use
+                     const EC_GROUP    *G,     // IN:  the EC_GROUP to use
+                     const UINT32       requestedBits // IN: if not 0, then dOut must have that many bits
                     )
 {
     BOOL           OK = FALSE;
     const BIGNUM  *D;
     EC_KEY        *eckey = EC_KEY_new();
+    UINT32         requestedBytes = BITS_TO_BYTES(requestedBits);
+    int            repeats = 0;
+    int            maxRepeats;
+    int            numBytes;
 
     pAssert(G != NULL);
 
@@ -287,10 +297,31 @@ OpenSSLEccGetPrivate(
     if (EC_KEY_set_group(eckey, G) != 1)
         goto Exit;
 
-    if (EC_KEY_generate_key(eckey) == 1) {
-        OK = TRUE;
-        D = EC_KEY_get0_private_key(eckey);
-        OsslToTpmBn(dOut, D);
+    maxRepeats = 8;
+    // non-byte boundary order'ed curves, like NIST P521, need more loops to
+    // have a result with topmost byte != 0
+    if (requestedBits & 7)
+        maxRepeats += (9 - (requestedBits & 7));
+
+    while (true) {
+        if (EC_KEY_generate_key(eckey) == 1) {
+            D = EC_KEY_get0_private_key(eckey);
+            // if we need a certain amount of bytes and we are below a threshold
+            // of loops, check the number of bytes we have, otherwise take the
+            // result
+            if ((requestedBytes != 0) && (repeats < maxRepeats)) {
+                numBytes = BN_num_bytes(D);
+                if ((int)requestedBytes != numBytes) {
+                    // result does not have enough bytes
+                    repeats++;
+                    continue;
+                }
+                // result is sufficient
+            }
+            OK = TRUE;
+            OsslToTpmBn(dOut, D);
+        }
+        break;
     }
 
  Exit:
@@ -367,6 +398,7 @@ ComputePrivateExponentD(
         pOK = pOK && BN_sub(phi, phi, Q);
         pOK = pOK && BN_add_word(phi, 1);
         // Compute the multiplicative inverse d = 1/e mod Phi
+        BN_set_flags(phi, BN_FLG_CONSTTIME); // phi is secret
         pOK = pOK && (*D = BN_mod_inverse(NULL, E, phi, ctx)) != NULL;
     }
     BN_CTX_free(ctx);
@@ -420,6 +452,29 @@ InitOpenSSLRSAPublicKey(OBJECT      *key,     // IN
     return retVal;
 }
 
+static void DoRSACheckKey(const BIGNUM *P, const BIGNUM *Q, const BIGNUM *N,
+                          const BIGNUM *E, const BIGNUM *D)
+{
+    RSA *mykey;
+    static int disp;
+
+    if (!DO_RSA_CHECK_KEY)
+        return;
+    if (!disp) {
+        fprintf(stderr, "RSA key checking is enabled\n");
+        disp = 1;
+    }
+
+    mykey = RSA_new();
+    RSA_set0_factors(mykey, BN_dup(P), BN_dup(Q));
+    RSA_set0_key(mykey, BN_dup(N), BN_dup(E), BN_dup(D));
+    if (RSA_check_key(mykey) != 1) {
+        fprintf(stderr, "Detected bad RSA key. STOP.\n");
+        while (1);
+    }
+    RSA_free(mykey);
+}
+
 LIB_EXPORT TPM_RC
 InitOpenSSLRSAPrivateKey(OBJECT     *rsaKey,   // IN
                          EVP_PKEY  **pkey      // OUT
@@ -460,14 +515,19 @@ InitOpenSSLRSAPrivateKey(OBJECT     *rsaKey,   // IN
     RSA_get0_key(key, &N, &E, NULL);
 
     /* Q = N/P; no remainder */
+    BN_set_flags(P, BN_FLG_CONSTTIME); // P is secret
     BN_div(Q, Qr, N, P, ctx);
     if(!BN_is_zero(Qr))
         ERROR_RETURN(TPM_RC_BINDING);
+    BN_set_flags(Q, BN_FLG_CONSTTIME); // Q is secret
 
     // TODO(stefanb): consider caching D in the OBJECT
     if (ComputePrivateExponentD(P, Q, E, N, &D) == FALSE ||
         RSA_set0_key(key, NULL, NULL, D) != 1)
         ERROR_RETURN(TPM_RC_FAILURE);
+
+    DoRSACheckKey(P, Q, N, E, D);
+
     D = NULL;
 
 #if CRT_FORMAT_RSA == YES

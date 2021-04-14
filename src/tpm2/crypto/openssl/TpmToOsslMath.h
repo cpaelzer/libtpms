@@ -3,7 +3,7 @@
 /*	 		TPM to OpenSSL BigNum Shim Layer			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslMath.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: TpmToOsslMath.h 1594 2020-03-26 22:15:48Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -70,6 +70,9 @@
 #define MATH_LIB_OSSL
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+
+#define SYMMETRIC_ALIGNMENT RADIX_BYTES
+
 #if 0 // libtpms added
 #if OPENSSL_VERSION_NUMBER >= 0x10200000L
 // Check the bignum_st definition in crypto/bn/bn_lcl.h and either update the
@@ -78,14 +81,17 @@
 #elif OPENSSL_VERSION_NUMBER >= 0x10100000L
 // from crypto/bn/bn_lcl.h
 struct bignum_st {
-    BN_ULONG *d;                /* Pointer to an array of 'BN_BITS2' bit
-				 * chunks. */
+    BN_ULONG *d;
     int top;                    /* Index of last used d +1. */
     /* The next are internal book keeping for bn_expand. */
     int dmax;                   /* Size of the d array. */
     int neg;                    /* one if the number is negative */
     int flags;
 };
+#if 0   // libtpms added
+#   define EC_POINT_get_affine_coordinates EC_POINT_get_affine_coordinates_GFp
+#   define EC_POINT_set_affine_coordinates EC_POINT_set_affine_coordinates_GFp
+#endif  // libtpms added
 #endif // OPENSSL_VERSION_NUMBER
 #endif // libtpms added
 #include <openssl/bn.h>

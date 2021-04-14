@@ -1,7 +1,17 @@
+libtpms (0.8.2-1) unstable; urgency=medium
+
+  * New upstream version 0.8.2
+  * Fix a security issue, CVE-2021-3446 (Closes: #986799)
+  * debian/patches: Remove some useless patches because of new upstream
+    version
+  * debian/copyright: Fix lintian issues
+
+ -- Seunghun Han <kkamagui@gmail.com>  Wed, 14 Apr 2021 13:49:01 +0900
+
 libtpms (0.8.0~dev1-1.2) unstable; urgency=medium
 
-  *Fix a non-reproducible bug caused by the invalid path (Closes: #964768)
-  *Fix a FTBFS bug caused by the incomplete condition (Closes: #966857)
+  * Fix a non-reproducible bug caused by the invalid path (Closes: #964768)
+  * Fix a FTBFS bug caused by the incomplete condition (Closes: #966857)
 
  -- Seunghun Han <kkamagui@gmail.com>  Sun, 09 Aug 2020 02:31:09 +0900
 
