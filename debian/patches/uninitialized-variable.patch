@@ -1,0 +1,31 @@
+Description: fix issues of variables that may be used before initialization
+ Detected by gcc on Ubuntu/s390x
+Author: Steve Langasek <steve.langasek@ubuntu.com>
+Last-Update: 2020-12-09
+
+Index: libtpms-0.8.2-1ubuntu1/src/tpm12/tpm_nvram.c
+===================================================================
+--- libtpms-0.8.2-1ubuntu1.orig/src/tpm12/tpm_nvram.c
++++ libtpms-0.8.2-1ubuntu1/src/tpm12/tpm_nvram.c
+@@ -1290,7 +1290,7 @@
+     TPM_BOOL			physicalPresence;
+     TPM_BOOL			isGPIO = FALSE;
+     BYTE 			*gpioData = NULL;
+-    TPM_NV_DATA_SENSITIVE	*d1NvdataSensitive;
++    TPM_NV_DATA_SENSITIVE	*d1NvdataSensitive = NULL;
+     uint32_t			s1Last;
+     
+     /* output parameters  */
+Index: libtpms-0.8.2-1ubuntu1/src/tpm2/Marshal.c
+===================================================================
+--- libtpms-0.8.2-1ubuntu1.orig/src/tpm2/Marshal.c
++++ libtpms-0.8.2-1ubuntu1/src/tpm2/Marshal.c
+@@ -2193,7 +2193,7 @@
+ TPM2B_NV_PUBLIC_Marshal(TPM2B_NV_PUBLIC *source, BYTE **buffer, INT32 *size)
+ {
+     UINT16 written = 0;
+-    BYTE *sizePtr;
++    BYTE *sizePtr = NULL;
+ 
+     if (buffer != NULL) {
+ 	sizePtr = *buffer;

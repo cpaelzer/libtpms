@@ -1,3 +1,11 @@
+libtpms (0.8.2-1ubuntu1) impish; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/uninitialized-variable.patch: fix issues of variables
+      that may be used before initialization.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 27 Apr 2021 23:55:31 -0700
+
 libtpms (0.8.2-1) unstable; urgency=medium
 
   * New upstream version 0.8.2
@@ -7,6 +15,13 @@ libtpms (0.8.2-1) unstable; urgency=medium
   * debian/copyright: Fix lintian issues
 
  -- Seunghun Han <kkamagui@gmail.com>  Wed, 14 Apr 2021 13:49:01 +0900
+
+libtpms (0.8.0~dev1-1.2ubuntu1) hirsute; urgency=medium
+
+  * debian/patches/uninitialized-variable.patch: fix issues of variables
+    that may be used before initialization.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 09 Dec 2020 19:31:25 +0000
 
 libtpms (0.8.0~dev1-1.2) unstable; urgency=medium
 
@@ -45,3 +60,4 @@ libtpms (0.8.0~dev1-1) unstable; urgency=medium
   * Set date of man pages to last changelog entry
 
  -- Seunghun Han <kkamagui@gmail.com>  Sat, 18 Apr 2020 09:20:03 +0900
+
