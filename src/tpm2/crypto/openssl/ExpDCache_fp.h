@@ -1,9 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*		Platform specific entry and fail processing	   		*/
-/*			     Written by Ken Goldman				*/
+/*			Private Exponent D cache functions			*/
+/*			     Written by Stefan Berger				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: RunCommand.c 1476 2019-06-10 19:32:03Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,51 +54,22 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp., 2021						*/
 /*										*/
 /********************************************************************************/
 
-/* C.11 RunCommand.c */
-/* C.11.1. Introduction */
-/* This module provides the platform specific entry and fail processing. The _plat__RunCommand()
-   function is used to call to ExecuteCommand() in the TPM code. This function does whatever
-   processing is necessary to set up the platform in anticipation of the call to the TPM including
-   setup for error processing. */
-/* The _plat__Fail() function is called when there is a failure in the TPM. The TPM code will have
-   set the flag to indicate that the TPM is in failure mode. This call will then recursively call
-   ExecuteCommand() in order to build the failure mode response. When ExecuteCommand() returns to
-   _plat__Fail(), the platform will do some platform specif operation to return to the environment
-   in which the TPM is executing. For a simulator, setjmp/longjmp is used. For an OS, a system exit
-   to the OS would be appropriate. */
-/* C.11.2. Includes and locals */
-#include "Platform.h"
-#include <setjmp.h>
-#include "ExecCommand_fp.h"
-jmp_buf              s_jumpBuffer;
-/* C.11.3. Functions */
-/* C.11.3.1. _plat__RunCommand() */
-/* This version of RunCommand() will set up a jum_buf and call ExecuteCommand(). If the command
-   executes without failing, it will return and RunCommand() will return. If there is a failure in
-   the command, then _plat__Fail() is called and it will longjump back to RunCommand() which will
-   call ExecuteCommand() again. However, this time, the TPM will be in failure mode so
-   ExecuteCommand() will simply build a failure response and return. */
-LIB_EXPORT void
-_plat__RunCommand(
-		  uint32_t         requestSize,   // IN: command buffer size
-		  unsigned char   *request,       // IN: command buffer
-		  uint32_t        *responseSize,  // IN/OUT: response buffer size
-		  unsigned char   **response      // IN/OUT: response buffer
-		  )
-{
-    setjmp(s_jumpBuffer);
-    ExecuteCommand(requestSize, request, responseSize, response);
-}
-/* C.11.3.2. _plat__Fail() */
-/* This is the platform depended failure exit for the TPM. */
-LIB_EXPORT NORETURN void
-_plat__Fail(
-	    void
-	    )
-{
-    longjmp(&s_jumpBuffer[0], 1);
-}
+#ifndef DCACHE_FP_H
+#define DCACHE_FP_H
+
+#include <openssl/bn.h>
+
+BIGNUM *ExpDCacheFind(const BIGNUM *P, const BIGNUM *N, const BIGNUM *E,
+                      BIGNUM **Q);
+
+void ExpDCacheAdd(const BIGNUM *P, const BIGNUM *N, const BIGNUM *E,
+                  const BIGNUM *Q, const BIGNUM *D);
+
+void ExpDCacheFree(void);
+
+#endif /* DCACHE_FP_H */
+

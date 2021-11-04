@@ -59,6 +59,7 @@
 /********************************************************************************/
 
 #include "Tpm.h"
+#include "ExpDCache_fp.h"
 #include "Helpers_fp.h"
 #include "TpmToOsslMath_fp.h"
 
@@ -122,31 +123,31 @@ evpfunc GetEVPCipher(TPM_ALG_ID    algorithm,       // IN
         *keyToUseLen = keySizeInBytes;
         switch (mode) {
 #if ALG_CTR
-        case ALG_CTR_VALUE:
+        case TPM_ALG_CTR:
             evpfn = (evpfunc []){EVP_aes_128_ctr, EVP_aes_192_ctr,
                                  EVP_aes_256_ctr}[i];
             break;
 #endif
 #if ALG_OFB
-        case ALG_OFB_VALUE:
+        case TPM_ALG_OFB:
             evpfn = (evpfunc[]){EVP_aes_128_ofb, EVP_aes_192_ofb,
                                 EVP_aes_256_ofb}[i];
             break;
 #endif
 #if ALG_CBC
-        case ALG_CBC_VALUE:
+        case TPM_ALG_CBC:
             evpfn = (evpfunc[]){EVP_aes_128_cbc, EVP_aes_192_cbc,
                                 EVP_aes_256_cbc}[i];
             break;
 #endif
 #if ALG_CFB
-        case ALG_CFB_VALUE:
+        case TPM_ALG_CFB:
             evpfn = (evpfunc[]){EVP_aes_128_cfb, EVP_aes_192_cfb,
                                 EVP_aes_256_cfb}[i];
             break;
 #endif
 #if ALG_ECB
-        case ALG_ECB_VALUE:
+        case TPM_ALG_ECB:
             evpfn = (evpfunc[]){EVP_aes_128_ecb, EVP_aes_192_ecb,
                                 EVP_aes_256_ecb}[i];
             break;
@@ -165,27 +166,27 @@ evpfunc GetEVPCipher(TPM_ALG_ID    algorithm,       // IN
 
         switch (mode) {
 #if ALG_CTR
-        case ALG_CTR_VALUE:
+        case TPM_ALG_CTR:
             evpfn = (evpfunc[]){EVP_des_ede3, EVP_des_ede3, NULL}[i];
             break;
 #endif
 #if ALG_OFB
-        case ALG_OFB_VALUE:
+        case TPM_ALG_OFB:
             evpfn = (evpfunc[]){EVP_des_ede3_ofb, EVP_des_ede3_ofb, NULL}[i];
             break;
 #endif
 #if ALG_CBC
-        case ALG_CBC_VALUE:
+        case TPM_ALG_CBC:
             evpfn = (evpfunc[]){EVP_des_ede3_cbc, EVP_des_ede3_cbc, NULL}[i];
             break;
 #endif
 #if ALG_CFB
-        case ALG_CFB_VALUE:
+        case TPM_ALG_CFB:
             evpfn = (evpfunc[]){EVP_des_ede3_cfb64, EVP_des_ede3_cfb64, NULL}[i];
             break;
 #endif
 #if ALG_ECB
-        case ALG_ECB_VALUE:
+        case TPM_ALG_ECB:
             evpfn = (evpfunc[]){EVP_des_ede3_ecb, EVP_des_ede3_ecb, NULL}[i];
             break;
 #endif
@@ -198,27 +199,27 @@ evpfunc GetEVPCipher(TPM_ALG_ID    algorithm,       // IN
         *keyToUseLen = keySizeInBytes;
         switch (mode) {
 #if ALG_CTR
-        case ALG_CTR_VALUE:
+        case TPM_ALG_CTR:
             evpfn = (evpfunc[]){EVP_sm4_ctr, NULL, NULL}[i];
             break;
 #endif
 #if ALG_OFB
-        case ALG_OFB_VALUE:
+        case TPM_ALG_OFB:
             evpfn = (evpfunc[]){EVP_sm4_ofb, NULL, NULL}[i];
             break;
 #endif
 #if ALG_CBC
-        case ALG_CBC_VALUE:
+        case TPM_ALG_CBC:
             evpfn = (evpfunc[]){EVP_sm4_cbc, NULL, NULL}[i];
             break;
 #endif
 #if ALG_CFB
-        case ALG_CFB_VALUE:
+        case TPM_ALG_CFB:
             evpfn = (evpfunc[]){EVP_sm4_cfb, NULL, NULL}[i];
             break;
 #endif
 #if ALG_ECB
-        case ALG_ECB_VALUE:
+        case TPM_ALG_ECB:
             evpfn = (evpfunc[]){EVP_sm4_ecb, NULL, NULL}[i];
             break;
 #endif
@@ -231,31 +232,31 @@ evpfunc GetEVPCipher(TPM_ALG_ID    algorithm,       // IN
         *keyToUseLen = keySizeInBytes;
         switch (mode) {
 #if ALG_CTR
-        case ALG_CTR_VALUE:
+        case TPM_ALG_CTR:
             evpfn = (evpfunc []){EVP_camellia_128_ctr, EVP_camellia_192_ctr,
                                  EVP_camellia_256_ctr}[i];
             break;
 #endif
 #if ALG_OFB
-        case ALG_OFB_VALUE:
+        case TPM_ALG_OFB:
             evpfn = (evpfunc[]){EVP_camellia_128_ofb, EVP_camellia_192_ofb,
                                 EVP_camellia_256_ofb}[i];
             break;
 #endif
 #if ALG_CBC
-        case ALG_CBC_VALUE:
+        case TPM_ALG_CBC:
             evpfn = (evpfunc[]){EVP_camellia_128_cbc, EVP_camellia_192_cbc,
                                 EVP_camellia_256_cbc}[i];
             break;
 #endif
 #if ALG_CFB
-        case ALG_CFB_VALUE:
+        case TPM_ALG_CFB:
             evpfn = (evpfunc[]){EVP_camellia_128_cfb, EVP_camellia_192_cfb,
                                 EVP_camellia_256_cfb}[i];
             break;
 #endif
 #if ALG_ECB
-        case ALG_ECB_VALUE:
+        case TPM_ALG_ECB:
             evpfn = (evpfunc[]){EVP_camellia_128_ecb, EVP_camellia_192_ecb,
                                 EVP_camellia_256_ecb}[i];
             break;
@@ -491,7 +492,7 @@ InitOpenSSLRSAPrivateKey(OBJECT     *rsaKey,   // IN
     BIGNUM       *dQ = BN_new();
     BIGNUM       *qInv = BN_new();
 #endif
-    RSA          *key;
+    RSA          *key = NULL;
     BN_CTX       *ctx = NULL;
     TPM_RC        retVal = InitOpenSSLRSAPublicKey(rsaKey, pkey);
 
@@ -501,29 +502,35 @@ InitOpenSSLRSAPrivateKey(OBJECT     *rsaKey,   // IN
     if(!rsaKey->attributes.privateExp)
         CryptRsaLoadPrivateExponent(rsaKey);
 
-    ctx = BN_CTX_new();
-    Q = BN_new();
-    Qr = BN_new();
     P = BN_bin2bn(rsaKey->sensitive.sensitive.rsa.t.buffer,
                   rsaKey->sensitive.sensitive.rsa.t.size, NULL);
-    if (ctx == NULL || Q == NULL || Qr == NULL || P == NULL)
+    if (P == NULL)
         ERROR_RETURN(TPM_RC_FAILURE)
 
-    key = EVP_PKEY_get0_RSA(*pkey);
+    key = EVP_PKEY_get1_RSA(*pkey);
     if (key == NULL)
         ERROR_RETURN(TPM_RC_FAILURE);
     RSA_get0_key(key, &N, &E, NULL);
 
-    /* Q = N/P; no remainder */
-    BN_set_flags(P, BN_FLG_CONSTTIME); // P is secret
-    BN_div(Q, Qr, N, P, ctx);
-    if(!BN_is_zero(Qr))
-        ERROR_RETURN(TPM_RC_BINDING);
-    BN_set_flags(Q, BN_FLG_CONSTTIME); // Q is secret
+    D = ExpDCacheFind(P, N, E, &Q);
+    if (D == NULL) {
+        ctx = BN_CTX_new();
+        Q = BN_new();
+        Qr = BN_new();
+        if (ctx == NULL || Q == NULL || Qr == NULL)
+            ERROR_RETURN(TPM_RC_FAILURE);
+        /* Q = N/P; no remainder */
+        BN_set_flags(P, BN_FLG_CONSTTIME); // P is secret
+        BN_div(Q, Qr, N, P, ctx);
+        if(!BN_is_zero(Qr))
+            ERROR_RETURN(TPM_RC_BINDING);
+        BN_set_flags(Q, BN_FLG_CONSTTIME); // Q is secret
 
-    // TODO(stefanb): consider caching D in the OBJECT
-    if (ComputePrivateExponentD(P, Q, E, N, &D) == FALSE ||
-        RSA_set0_key(key, NULL, NULL, D) != 1)
+        if (ComputePrivateExponentD(P, Q, E, N, &D) == FALSE)
+            ERROR_RETURN(TPM_RC_FAILURE);
+        ExpDCacheAdd(P, N, E, Q, D);
+    }
+    if (RSA_set0_key(key, NULL, NULL, D) != 1)
         ERROR_RETURN(TPM_RC_FAILURE);
 
     DoRSACheckKey(P, Q, N, E, D);
@@ -547,6 +554,7 @@ InitOpenSSLRSAPrivateKey(OBJECT     *rsaKey,   // IN
     BN_clear_free(P);
     BN_clear_free(Q);
     BN_free(Qr);
+    RSA_free(key); // undo reference from EVP_PKEY_get1_RSA()
 
     if (retVal != TPM_RC_SUCCESS) {
         BN_clear_free(D);

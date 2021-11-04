@@ -146,7 +146,7 @@ block_skip_write_pop(block_skip *bs, INT32 *size) {
 /*
  * This function must be called when unmarshalling a byte stream and
  * a compile-time optional block follows. In case the compile-time
- * optinal block is there but not in the byte stream, we log an error.
+ * optional block is there but not in the byte stream, we log an error.
  * In case the bytes stream contains the block, but we don't need it
  * we skip it. In the other cases we don't need to do anything since
  * the code is 'in sync' with the byte stream.
@@ -278,7 +278,7 @@ static UINT16
 TPM2B_PROOF_Marshal(TPM2B_PROOF *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
-    written += TPM2B_Marshal(&source->b, buffer, size);
+    written += TPM2B_Marshal(&source->b, sizeof(source->t.buffer), buffer, size);
     return written;
 }
 
@@ -733,45 +733,45 @@ PCR_SAVE_Marshal(PCR_SAVE *data, BYTE **buffer, INT32 *size)
     algid = TPM_ALG_SHA1;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha1);
+    array_size = sizeof(data->Sha1);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha1, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha1, array_size,
                             buffer, size);
 #endif
 #if ALG_SHA256
     algid = TPM_ALG_SHA256;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha256);
+    array_size = sizeof(data->Sha256);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha256, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha256, array_size,
                               buffer, size);
 #endif
 #if ALG_SHA384
     algid = TPM_ALG_SHA384;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha384);
+    array_size = sizeof(data->Sha384);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha384, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha384, array_size,
                              buffer, size);
 #endif
 #if ALG_SHA512
     algid = TPM_ALG_SHA512;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha512);
+    array_size = sizeof(data->Sha512);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha512, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha512, array_size,
                              buffer, size);
 #endif
 #if ALG_SM3_256
     algid = TPM_ALG_SM3_256;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sm3_256);
+    array_size = sizeof(data->Sm3_256);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sm3_256, array_size,
+    written += Array_Marshal((BYTE *)&data->Sm3_256, array_size,
                              buffer, size);
 #endif
 #if ALG_SHA3_256 || ALG_SHA3_384 || ALG_SHA3_512 || ALG_SM3_256
@@ -851,32 +851,32 @@ PCR_SAVE_Unmarshal(PCR_SAVE *data, BYTE **buffer, INT32 *size,
             switch (algid) {
 #if ALG_SHA1
             case TPM_ALG_SHA1:
-                needed_size = sizeof(data->sha1);
-                t = (BYTE *)&data->sha1;
+                needed_size = sizeof(data->Sha1);
+                t = (BYTE *)&data->Sha1;
             break;
 #endif
 #if ALG_SHA256
             case TPM_ALG_SHA256:
-                needed_size = sizeof(data->sha256);
-                t = (BYTE *)&data->sha256;
+                needed_size = sizeof(data->Sha256);
+                t = (BYTE *)&data->Sha256;
             break;
 #endif
 #if ALG_SHA384
             case TPM_ALG_SHA384:
-                needed_size = sizeof(data->sha384);
-                t = (BYTE *)&data->sha384;
+                needed_size = sizeof(data->Sha384);
+                t = (BYTE *)&data->Sha384;
             break;
 #endif
 #if ALG_SHA512
             case TPM_ALG_SHA512:
-                needed_size = sizeof(data->sha512);
-                t = (BYTE *)&data->sha512;
+                needed_size = sizeof(data->Sha512);
+                t = (BYTE *)&data->Sha512;
             break;
 #endif
 #if ALG_SM3_256
             case TPM_ALG_SM3_256:
-                needed_size = sizeof(data->sm3_256);
-                t = (BYTE *)&data->sm3_256;
+                needed_size = sizeof(data->Sm3_256);
+                t = (BYTE *)&data->Sm3_256;
             break;
 #endif
 #if ALG_SHA3_256 || ALG_SHA3_384 || ALG_SHA3_512 || ALG_SM3_256
@@ -949,45 +949,45 @@ PCR_Marshal(PCR *data, BYTE **buffer, INT32 *size)
     algid = TPM_ALG_SHA1;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha1Pcr);
+    array_size = sizeof(data->Sha1Pcr);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha1Pcr, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha1Pcr, array_size,
                             buffer, size);
 #endif
 #if ALG_SHA256
     algid = TPM_ALG_SHA256;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha256Pcr);
+    array_size = sizeof(data->Sha256Pcr);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha256Pcr, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha256Pcr, array_size,
                               buffer, size);
 #endif
 #if ALG_SHA384
     algid = TPM_ALG_SHA384;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha384Pcr);
+    array_size = sizeof(data->Sha384Pcr);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha384Pcr, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha384Pcr, array_size,
                              buffer, size);
 #endif
 #if ALG_SHA512
     algid = TPM_ALG_SHA512;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sha512Pcr);
+    array_size = sizeof(data->Sha512Pcr);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sha512Pcr, array_size,
+    written += Array_Marshal((BYTE *)&data->Sha512Pcr, array_size,
                              buffer, size);
 #endif
 #if ALG_SM3_256
     algid = TPM_ALG_SM3_256;
     written += TPM_ALG_ID_Marshal(&algid, buffer, size);
 
-    array_size = sizeof(data->sm3_256Pcr);
+    array_size = sizeof(data->Sm3_256Pcr);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->sm3_256Pcr, array_size,
+    written += Array_Marshal((BYTE *)&data->Sm3_256Pcr, array_size,
                              buffer, size);
 #endif
 #if ALG_SHA3_256 || ALG_SHA3_384 || ALG_SHA3_512 || ALG_SM3_256
@@ -1033,32 +1033,32 @@ PCR_Unmarshal(PCR *data, BYTE **buffer, INT32 *size,
             switch (algid) {
 #if ALG_SHA1
             case TPM_ALG_SHA1:
-                needed_size = sizeof(data->sha1Pcr);
-                t = (BYTE *)&data->sha1Pcr;
+                needed_size = sizeof(data->Sha1Pcr);
+                t = (BYTE *)&data->Sha1Pcr;
             break;
 #endif
 #if ALG_SHA256
             case TPM_ALG_SHA256:
-                needed_size = sizeof(data->sha256Pcr);
-                t = (BYTE *)&data->sha256Pcr;
+                needed_size = sizeof(data->Sha256Pcr);
+                t = (BYTE *)&data->Sha256Pcr;
             break;
 #endif
 #if ALG_SHA384
             case TPM_ALG_SHA384:
-                needed_size = sizeof(data->sha384Pcr);
-                t = (BYTE *)&data->sha384Pcr;
+                needed_size = sizeof(data->Sha384Pcr);
+                t = (BYTE *)&data->Sha384Pcr;
             break;
 #endif
 #if ALG_SHA512
             case TPM_ALG_SHA512:
-                needed_size = sizeof(data->sha512Pcr);
-                t = (BYTE *)&data->sha512Pcr;
+                needed_size = sizeof(data->Sha512Pcr);
+                t = (BYTE *)&data->Sha512Pcr;
             break;
 #endif
 #if ALG_SM3_256
             case TPM_ALG_SM3_256:
-                needed_size = sizeof(data->sm3_256Pcr);
-                t = (BYTE *)&data->sm3_256Pcr;
+                needed_size = sizeof(data->Sm3_256Pcr);
+                t = (BYTE *)&data->Sm3_256Pcr;
             break;
 #endif
 #if ALG_SHA3_256 || ALG_SHA3_384 || ALG_SHA3_512 || ALG_SM3_256
@@ -1262,7 +1262,7 @@ skip_future_versions:
 }
 
 #define STATE_RESET_DATA_MAGIC  0x01102332
-#define STATE_RESET_DATA_VERSION 3
+#define STATE_RESET_DATA_VERSION 4
 
 static TPM_RC
 STATE_RESET_DATA_Unmarshal(STATE_RESET_DATA *data, BYTE **buffer, INT32 *size)
@@ -1295,15 +1295,38 @@ STATE_RESET_DATA_Unmarshal(STATE_RESET_DATA *data, BYTE **buffer, INT32 *size)
         rc = UINT16_Unmarshal(&array_size, buffer, size);
     }
     if (rc == TPM_RC_SUCCESS &&
-        array_size != sizeof(data->contextArray)) {
+        array_size != ARRAY_SIZE(data->contextArray)) {
         TPMLIB_LogTPM2Error("STATE_RESET_DATA: Bad array size for contextArray; "
                             "expected %zu, got %u\n",
-                            sizeof(data->contextArray), array_size);
+                            ARRAY_SIZE(data->contextArray), array_size);
         rc = TPM_RC_BAD_PARAMETER;
     }
     if (rc == TPM_RC_SUCCESS) {
-        rc = Array_Unmarshal((BYTE *)&data->contextArray, array_size,
-                              buffer, size);
+        size_t i;
+        if (hdr.version <= 3) {
+            /* version <= 3 was writing an array of UINT8 */
+            UINT8 element;
+            for (i = 0; i < array_size && rc == TPM_RC_SUCCESS; i++) {
+                rc = UINT8_Unmarshal(&element, buffer, size);
+                data->contextArray[i] = element;
+            }
+            s_ContextSlotMask = 0xff;
+        } else {
+            /* version 4 and later an array of UINT16 */
+            for (i = 0; i < array_size && rc == TPM_RC_SUCCESS; i++) {
+                rc = UINT16_Unmarshal(&data->contextArray[i], buffer, size);
+            }
+            if (rc == TPM_RC_SUCCESS) {
+                rc = UINT16_Unmarshal(&s_ContextSlotMask, buffer, size);
+            }
+            if (rc == TPM_RC_SUCCESS) {
+                if (s_ContextSlotMask != 0xffff && s_ContextSlotMask != 0x00ff) {
+                    TPMLIB_LogTPM2Error("STATE_RESET_DATA: s_ContextSlotMask has bad value: 0x%04x\n",
+                                        s_ContextSlotMask);
+                    rc = TPM_RC_BAD_PARAMETER;
+                }
+            }
+        }
     }
     if (rc == TPM_RC_SUCCESS) {
         rc = UINT64_Unmarshal(&data->contextCounter, buffer, size);
@@ -1366,8 +1389,10 @@ skip_alg_ecc:
                                              buffer, size, "nullSeed");
         }
 
-        BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
-                        "STATE_RESET_DATA", "version 4 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
+                            "STATE_RESET_DATA", "version 4 or later");
+        }
         /* future versions nest-append here */
     }
 
@@ -1383,19 +1408,21 @@ STATE_RESET_DATA_Marshal(STATE_RESET_DATA *data, BYTE **buffer, INT32 *size)
     BOOL has_block;
     UINT16 array_size;
     BLOCK_SKIP_INIT;
+    size_t i;
 
     written = NV_HEADER_Marshal(buffer, size,
                                 STATE_RESET_DATA_VERSION,
-                                STATE_RESET_DATA_MAGIC, 3);
+                                STATE_RESET_DATA_MAGIC, 4);
     written += TPM2B_PROOF_Marshal(&data->nullProof, buffer, size);
-    written += TPM2B_Marshal(&data->nullSeed.b, buffer, size);
+    written += TPM2B_Marshal(&data->nullSeed.b, sizeof(data->nullSeed.t.buffer), buffer, size);
     written += UINT32_Marshal(&data->clearCount, buffer, size);
     written += UINT64_Marshal(&data->objectContextID, buffer, size);
 
-    array_size = sizeof(data->contextArray);
+    array_size = ARRAY_SIZE(data->contextArray);
     written += UINT16_Marshal(&array_size, buffer, size);
-    written += Array_Marshal((BYTE *)&data->contextArray, array_size,
-                              buffer, size);
+    for (i = 0; i < array_size; i++)
+        written += UINT16_Marshal(&data->contextArray[i], buffer, size);
+    written += UINT16_Marshal(&s_ContextSlotMask, buffer, size);
 
     written += UINT64_Marshal(&data->contextCounter, buffer, size);
     written += TPM2B_DIGEST_Marshal(&data->commandAuditDigest,
@@ -1501,6 +1528,7 @@ bn_prime_t_Unmarshal(bn_prime_t *data, BYTE **buffer, INT32 *size)
                                 "allocated %zu\n",
                                 (size_t)data->size, (size_t)data->allocated);
             rc = TPM_RC_SIZE;
+            data->size = 0;
         }
     }
 
@@ -2175,7 +2203,7 @@ TPM2B_HASH_BLOCK_Marshal(TPM2B_HASH_BLOCK *data, BYTE **buffer, INT32 *size)
 {
     UINT16 written;
 
-    written = TPM2B_Marshal(&data->b, buffer, size);
+    written = TPM2B_Marshal(&data->b, sizeof(data->t.buffer), buffer, size);
 
     return written;
 }
@@ -2217,7 +2245,7 @@ HMAC_STATE_Unmarshal(HMAC_STATE *data, BYTE **buffer, INT32 *size)
 }
 
 #define HASH_OBJECT_MAGIC 0xb874fe38
-#define HASH_OBJECT_VERSION 2
+#define HASH_OBJECT_VERSION 3
 
 static UINT16
 HASH_OBJECT_Marshal(HASH_OBJECT *data, BYTE **buffer, INT32 *size)
@@ -2233,7 +2261,8 @@ HASH_OBJECT_Marshal(HASH_OBJECT *data, BYTE **buffer, INT32 *size)
     written += TPMI_ALG_HASH_Marshal(&data->nameAlg, buffer, size);
     written += TPMA_OBJECT_Marshal(&data->objectAttributes, buffer, size);
     written += TPM2B_AUTH_Marshal(&data->auth, buffer, size);
-    if (data->attributes.hashSeq == SET) {
+    if (data->attributes.hashSeq == SET ||
+        data->attributes.eventSeq == SET /* since v3 */) {
         array_size = ARRAY_SIZE(data->state.hashState);
         written += UINT16_Marshal(&array_size, buffer, size);
         for (i = 0; i < array_size; i++) {
@@ -2281,7 +2310,9 @@ HASH_OBJECT_Unmarshal(HASH_OBJECT *data, BYTE **buffer, INT32 *size)
         rc = TPM2B_AUTH_Unmarshal(&data->auth, buffer, size);
     }
     if (rc == TPM_RC_SUCCESS) {
-        if (data->attributes.hashSeq == SET) {
+        /* hashSeq was always written correctly; eventSeq only appeared in v3 */
+        if (data->attributes.hashSeq == SET ||
+            (data->attributes.eventSeq == SET && hdr.version >= 3)) {
             if (rc == TPM_RC_SUCCESS) {
                 rc = UINT16_Unmarshal(&array_size, buffer, size);
             }
@@ -2490,8 +2521,10 @@ skip_alg_rsa:
                                         "OBJECT seedCompatLevel");
         }
 
-        BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
-                        "OBJECT", "version 4 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
+                            "OBJECT", "version 4 or later");
+        }
         /* future versions nest-append here */
     }
 
@@ -2939,7 +2972,7 @@ VolatileState_Marshal(BYTE **buffer, INT32 *size)
 
     written += UINT64_Marshal(&s_maxCounter, buffer, size); /* line 992 */
     /* the following need not be written; NvIndexCacheInit initializes them partly
-     * and NvIndexCacheInit() is alled during ExecuteCommand()
+     * and NvIndexCacheInit() is called during ExecuteCommand()
      * - s_cachedNvIndex
      * - s_cachedNvRef
      * - s_cachedNvRamRef
@@ -3057,9 +3090,9 @@ VolatileState_Marshal(BYTE **buffer, INT32 *size)
 
     /* tie the volatile state to the EP,SP, and PPSeed */
     NvRead(&pd, NV_PERSISTENT_DATA, sizeof(pd));
-    written += TPM2B_Marshal(&pd.EPSeed.b, buffer, size);
-    written += TPM2B_Marshal(&pd.SPSeed.b, buffer, size);
-    written += TPM2B_Marshal(&pd.PPSeed.b, buffer, size);
+    written += TPM2B_Marshal(&pd.EPSeed.b, sizeof(pd.EPSeed.t.buffer), buffer, size);
+    written += TPM2B_Marshal(&pd.SPSeed.b, sizeof(pd.SPSeed.t.buffer), buffer, size);
+    written += TPM2B_Marshal(&pd.PPSeed.b, sizeof(pd.PPSeed.t.buffer), buffer, size);
 
     written += BLOCK_SKIP_WRITE_PUSH(TRUE, buffer, size); /* v4 */
 
@@ -3563,16 +3596,20 @@ skip_hardware_clock:
     if (rc == TPM_RC_SUCCESS && hdr.version >= 2) {
         BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 3, buffer, size,
                         "Volatile State", "version 3 or later");
-        rc = VolatileState_TailV3_Unmarshal(buffer, size);
-
-        BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 4, buffer, size,
-                        "Volatile State", "version 4 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            rc = VolatileState_TailV3_Unmarshal(buffer, size);
+        }
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 4, buffer, size,
+                            "Volatile State", "version 4 or later");
+        }
         if (rc == TPM_RC_SUCCESS) {
             rc = VolatileState_TailV4_Unmarshal(buffer, size);
         }
-
-        BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
-                        "Volatile State", "version 5 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
+                            "Volatile State", "version 5 or later");
+        }
         /* future versions append here */
     }
 
@@ -3726,6 +3763,40 @@ static const struct _entry {
     { COMPILE_CONSTANT(TPM_MAX_DERIVATION_BITS, EQ) },
     { COMPILE_CONSTANT(PROOF_SIZE, EQ) },
     { COMPILE_CONSTANT(HASH_COUNT, EQ) },
+
+    /* added for PA_COMPILE_CONSTANTS_VERSION == 3 */
+    { COMPILE_CONSTANT(AES_128, LE) },
+    { COMPILE_CONSTANT(AES_192, LE) },
+    { COMPILE_CONSTANT(AES_256, LE) },
+    { COMPILE_CONSTANT(SM4_128, LE) },
+    { COMPILE_CONSTANT(ALG_CAMELLIA, LE) },
+    { COMPILE_CONSTANT(CAMELLIA_128, LE) },
+    { COMPILE_CONSTANT(CAMELLIA_192, LE) },
+    { COMPILE_CONSTANT(CAMELLIA_256, LE) },
+    { COMPILE_CONSTANT(ALG_SHA3_256, LE) },
+    { COMPILE_CONSTANT(ALG_SHA3_384, LE) },
+    { COMPILE_CONSTANT(ALG_SHA3_512, LE) },
+    { COMPILE_CONSTANT(RSA_1024, LE) },
+    { COMPILE_CONSTANT(RSA_2048, LE) },
+    { COMPILE_CONSTANT(RSA_3072, LE) },
+    { COMPILE_CONSTANT(RSA_4096, LE) },
+    { COMPILE_CONSTANT(RSA_16384, LE) },
+    { COMPILE_CONSTANT(RH_ACT_0, LE) },
+    { COMPILE_CONSTANT(RH_ACT_1, LE) },
+    { COMPILE_CONSTANT(RH_ACT_2, LE) },
+    { COMPILE_CONSTANT(RH_ACT_3, LE) },
+    { COMPILE_CONSTANT(RH_ACT_4, LE) },
+    { COMPILE_CONSTANT(RH_ACT_5, LE) },
+    { COMPILE_CONSTANT(RH_ACT_6, LE) },
+    { COMPILE_CONSTANT(RH_ACT_7, LE) },
+    { COMPILE_CONSTANT(RH_ACT_8, LE) },
+    { COMPILE_CONSTANT(RH_ACT_9, LE) },
+    { COMPILE_CONSTANT(RH_ACT_A, LE) },
+    { COMPILE_CONSTANT(RH_ACT_B, LE) },
+    { COMPILE_CONSTANT(RH_ACT_C, LE) },
+    { COMPILE_CONSTANT(RH_ACT_D, LE) },
+    { COMPILE_CONSTANT(RH_ACT_E, LE) },
+    { COMPILE_CONSTANT(RH_ACT_F, LE) },
 };
 
 static TPM_RC
@@ -3758,7 +3829,7 @@ UINT32_Unmarshal_CheckConstant(BYTE **buffer, INT32 *size, UINT32 constant,
             break;
         }
         if (op) {
-            TPMLIB_LogTPM2Error("Unexpect value for %s; "
+            TPMLIB_LogTPM2Error("Unexpected value for %s; "
                                 "its value %d is not %s %d; "
                                 "(version: %u)\n",
                                 name, value, op, constant,
@@ -3770,7 +3841,7 @@ UINT32_Unmarshal_CheckConstant(BYTE **buffer, INT32 *size, UINT32 constant,
 }
 
 #define PA_COMPILE_CONSTANTS_MAGIC 0xc9ea6431
-#define PA_COMPILE_CONSTANTS_VERSION 2
+#define PA_COMPILE_CONSTANTS_VERSION 3
 
 /* Marshal compile-time constants related to persistent-all state */
 static UINT32
@@ -3809,6 +3880,7 @@ PACompileConstants_Unmarshal(BYTE **buffer, INT32 *size)
     unsigned i;
     NV_HEADER hdr;
     UINT32 array_size;
+    UINT32 exp_array_size;
 
     if (rc == TPM_RC_SUCCESS) {
         rc = NV_HEADER_Unmarshal(&hdr, buffer, size,
@@ -3816,17 +3888,37 @@ PACompileConstants_Unmarshal(BYTE **buffer, INT32 *size)
                                  PA_COMPILE_CONSTANTS_MAGIC);
     }
     if (rc == TPM_RC_SUCCESS) {
+        switch (hdr.version) {
+        case 1:
+        case 2:
+            /* PA_COMPILE_CONSTANTS_VERSION 1 and 2 had 88 entries */
+            exp_array_size = 88;
+            break;
+        case 3:
+            /* PA_COMPILE_CONSTANTS_VERSION 3 had 104 entries */
+            exp_array_size = 120;
+            break;
+        default:
+            /* we don't suport anything newer - no downgrade */
+            TPMLIB_LogTPM2Error("Unsupported PA_COMPILE_CONSTANTS version %d. "
+                                "Supporting up to version %d.\n",
+                                hdr.version, PA_COMPILE_CONSTANTS_VERSION);
+            rc = TPM_RC_BAD_VERSION;
+        }
+    }
+
+    if (rc == TPM_RC_SUCCESS) {
         rc = UINT32_Unmarshal(&array_size, buffer, size);
     }
 
     if (rc == TPM_RC_SUCCESS &&
-        array_size != ARRAY_SIZE(pa_compile_constants)) {
-        TPMLIB_LogTPM2Error("PA_COMPILE_CONSTANTS has non-matching number of "
-                            "elements; found %u, expected %zu\n",
-                            array_size, ARRAY_SIZE(pa_compile_constants));
+        array_size != exp_array_size) {
+        TPMLIB_LogTPM2Error("PA_COMPILE_CONSTANTS v%d has non-matching number of "
+                            "elements; found %u, expected %u\n",
+                            hdr.version, array_size, exp_array_size);
     }
 
-    for (i = 0; rc == TPM_RC_SUCCESS && i < ARRAY_SIZE(pa_compile_constants); i++)
+    for (i = 0; rc == TPM_RC_SUCCESS && i < exp_array_size; i++)
         rc = UINT32_Unmarshal_CheckConstant(
                                   buffer, size, pa_compile_constants[i].constant,
                                   pa_compile_constants[i].name,
@@ -3872,9 +3964,9 @@ PERSISTENT_DATA_Marshal(PERSISTENT_DATA *data, BYTE **buffer, INT32 *size)
     written += TPM2B_AUTH_Marshal(&data->ownerAuth, buffer, size);
     written += TPM2B_AUTH_Marshal(&data->endorsementAuth, buffer, size);
     written += TPM2B_AUTH_Marshal(&data->lockoutAuth, buffer, size);
-    written += TPM2B_Marshal(&data->EPSeed.b, buffer, size);
-    written += TPM2B_Marshal(&data->SPSeed.b, buffer, size);
-    written += TPM2B_Marshal(&data->PPSeed.b, buffer, size);
+    written += TPM2B_Marshal(&data->EPSeed.b, sizeof(data->EPSeed.t.buffer), buffer, size);
+    written += TPM2B_Marshal(&data->SPSeed.b, sizeof(data->SPSeed.t.buffer), buffer, size);
+    written += TPM2B_Marshal(&data->PPSeed.b, sizeof(data->PPSeed.t.buffer), buffer, size);
     written += TPM2B_PROOF_Marshal(&data->phProof, buffer, size);
     written += TPM2B_PROOF_Marshal(&data->shProof, buffer, size);
     written += TPM2B_PROOF_Marshal(&data->ehProof, buffer, size);
@@ -4140,10 +4232,14 @@ skip_num_policy_pcr_group:
     if (rc == TPM_RC_SUCCESS && hdr.version >= 2) {
         BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 3, buffer, size,
                         "PERSISTENT_DATA", "version 3 or later");
-        rc = TPML_PCR_SELECTION_Unmarshal(&shadow.pcrAllocated, buffer, size);
+        if (rc == TPM_RC_SUCCESS) {
+            rc = TPML_PCR_SELECTION_Unmarshal(&shadow.pcrAllocated, buffer, size);
+        }
 
-        BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 4, buffer, size,
-                        "PERSISTENT_DATA", "version 4 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, hdr.version >= 4, buffer, size,
+                            "PERSISTENT_DATA", "version 4 or later");
+        }
 
         if (rc == TPM_RC_SUCCESS) {
             rc = SEED_COMPAT_LEVEL_Unmarshal(&data->EPSeedCompatLevel,
@@ -4158,8 +4254,10 @@ skip_num_policy_pcr_group:
                                              buffer, size, "PPSeed");
         }
 
-        BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
-                        "PERSISTENT_DATA", "version 5 or later");
+        if (rc == TPM_RC_SUCCESS) {
+            BLOCK_SKIP_READ(skip_future_versions, FALSE, buffer, size,
+                            "PERSISTENT_DATA", "version 5 or later");
+        }
         /* future versions nest-append here */
     }
 
@@ -4229,6 +4327,12 @@ INDEX_ORDERLY_RAM_Marshal(void *array, size_t array_size,
                                      datasize, buffer, size);
         }
         offset += nrh.size;
+        if (offset + sizeof(NV_RAM_HEADER) > array_size) {
+            /* nothing will fit anymore and there won't be a 0-sized
+             * terminating node (@1).
+             */
+            break;
+        }
     }
 
     written += BLOCK_SKIP_WRITE_PUSH(TRUE, buffer, size);
@@ -4259,7 +4363,7 @@ INDEX_ORDERLY_RAM_Unmarshal(void *array, size_t array_size,
     }
     if (rc == TPM_RC_SUCCESS) {
         /* get the size of the array on the source side
-           we can accomodate different sizes when rebuilding
+           we can accommodate different sizes when rebuilding
            but if it doesn't fit we'll error out and report the sizes */
         rc = UINT32_Unmarshal(&sourceside_size, buffer, size);
     }
@@ -4270,6 +4374,16 @@ INDEX_ORDERLY_RAM_Unmarshal(void *array, size_t array_size,
          * we read 'into' nrh and copy to nrhp at end
          */
         nrhp = array + offset;
+
+        if (offset + sizeof(NV_RAM_HEADER) > sourceside_size) {
+            /* this case can occur with the previous entry filling up the
+             * space; in this case there will not be a 0-sized terminating
+             * node (see @1 above). We clear the rest of our space.
+             */
+            if (array_size > offset)
+                memset(nrhp, 0, array_size - offset);
+            break;
+        }
 
         /* write the NVRAM header;
            nrh->size holds the complete size including data;

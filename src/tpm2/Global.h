@@ -3,7 +3,7 @@
 /*			Internal Global Type Definitions			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Global.h 1600 2020-03-30 22:08:01Z kgoldman $		*/
+/*            $Id: Global.h 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -412,29 +412,19 @@ typedef struct SESSION
 #define     TIMEOUT_ON_RESTART  (UINT64_MAX - 1)
 typedef BYTE        SESSION_BUF[sizeof(SESSION)];
 
-/* 5.9.6	PCR */
-/* 5.9.6.1	PCR_SAVE Structure */
+/* 5.9.7	PCR */
+/* 5.9.7.1	PCR_SAVE Structure */
 /* The PCR_SAVE structure type contains the PCR data that are saved across power cycles. Only the
    static PCR are required to be saved across power cycles. The DRTM and resettable PCR are not
    saved. The number of static and resettable PCR is determined by the platform-specific
    specification to which the TPM is built. */
+
+#define PCR_SAVE_SPACE(HASH, Hash)  BYTE Hash[NUM_STATIC_PCR][HASH##_DIGEST_SIZE];
+
 typedef struct PCR_SAVE
 {
-#if ALG_SHA1
-    BYTE                sha1[NUM_STATIC_PCR][SHA1_DIGEST_SIZE];
-#endif
-#if ALG_SHA256
-    BYTE                sha256[NUM_STATIC_PCR][SHA256_DIGEST_SIZE];
-#endif
-#if ALG_SHA384
-    BYTE                sha384[NUM_STATIC_PCR][SHA384_DIGEST_SIZE];
-#endif
-#if ALG_SHA512
-    BYTE                sha512[NUM_STATIC_PCR][SHA512_DIGEST_SIZE];
-#endif
-#if ALG_SM3_256
-    BYTE                sm3_256[NUM_STATIC_PCR][SM3_256_DIGEST_SIZE];
-#endif
+    FOR_EACH_HASH(PCR_SAVE_SPACE)
+
     // This counter increments whenever the PCR are updated.
     // NOTE: A platform-specific specification may designate
     //       certain PCR changes as not causing this counter
@@ -490,7 +480,7 @@ typedef UINT32           NV_REF;
 typedef BYTE            *NV_RAM_REF;
 
 /* 5.9.8.3	NV_PIN */
-/* This structure deals with the possible endianess differences between the canonical form of the
+/* This structure deals with the possible endianness differences between the canonical form of the
    TPMS_NV_PIN_COUNTER_PARAMETERS structure and the internal value. The structures allow the data in
    a PIN index to be read as an 8-octet value using NvReadUINT64Data(). That function will byte swap
    all the values on a little endian system. This will put the bytes with the 4-octet values in the
@@ -864,7 +854,7 @@ typedef struct orderly_data
 #endif // ACCUMULATE_SELF_HEAL_TIMER
 
 #ifndef __ACT_DISABLED	// libtpms added
-#error ACT not suported in ORDERLY_DATA!
+#error ACT not supported in ORDERLY_DATA!
     // These are the ACT Timeout values. They are saved with the other timers
 #define DefineActData(N)  ACT_STATE      ACT_##N;
     FOR_EACH_ACT(DefineActData)
@@ -1006,6 +996,28 @@ typedef struct state_reset_data
 } STATE_RESET_DATA;
 EXTERN STATE_RESET_DATA gr;
 
+										// libtpms added begin
+/* The s_ContextSlotMask masks CONTEXT_SLOT values; this variable can have
+ * only two valid values, 0xff or 0xffff. The former is used to simulate
+ * a CONTEXT_SLOT defined as UINT8, the latter is used for the CONTEXT_SLOT
+ * when it is a UINT16. The original TPM 2 code uses a cast to CONTEXT_SLOT
+ * to truncate larger values and has been modified to use CONTEXT_SLOT_MASKED
+ * to achieve the same effect with the above two values.
+ *
+ * Using CONTEXT_SLOT_MASKED we make sure that when we write values into
+ * gr.contextArray that these values are properly masked/truncated so that
+ * when we read values from gr.contextArray that we don't have to mask
+ * them again.
+ *
+ * s_ContextSlotMask may only be initialized to 0xff when resuming an older
+ * state from the time when CONTEXT_SLOT was UINT8, otherwise it must be set
+ * to 0xffff. We set it to 0xffff in SessionStartup(SU_CLEAR) and to be
+ * able to save the TPM state really early (and restore it) also in
+ * TPM_Manufacture().
+ */
+EXTERN CONTEXT_SLOT s_ContextSlotMask;
+#define CONTEXT_SLOT_MASKED(val) ((CONTEXT_SLOT)(val) & s_ContextSlotMask)	// libtpms added end
+
 /* 5.9.12 NV Layout */
 /* The NV data organization is */
 /* a) a PERSISTENT_DATA structure */
@@ -1061,7 +1073,15 @@ typedef struct _COMMAND_FLAGS_
 #endif                                     /* libtpms added */
 
 /* This structure is used to avoid having to manage a large number of parameters being passed
-   through various levels of the command input processing. */
+   through various levels of the command input processing.
+
+   The following macros are used to define the space for the CP and RP hashes. Space is provided
+   for each implemented hash algorithm because it is not known what the caller may use.
+*/
+
+#define CP_HASH(HASH, Hash)           TPM2B_##HASH##_DIGEST   Hash##CpHash;
+#define RP_HASH(HASH, Hash)           TPM2B_##HASH##_DIGEST   Hash##RpHash;
+
 typedef struct _COMMAND_
 {
     TPM_ST           tag;               // the parsed command tag
@@ -1079,30 +1099,12 @@ typedef struct _COMMAND_
     // of authorizationSize field and should be zero when the authorizations are parsed.
     BYTE            *parameterBuffer;   // input to ExecuteCommand
     BYTE            *responseBuffer;    // input to ExecuteCommand
-#if ALG_SHA1
-    TPM2B_SHA1_DIGEST   sha1CpHash;
-    TPM2B_SHA1_DIGEST   sha1RpHash;
-#endif
-#if ALG_SHA256
-    TPM2B_SHA256_DIGEST sha256CpHash;
-    TPM2B_SHA256_DIGEST sha256RpHash;
-#endif
-#if ALG_SHA384
-    TPM2B_SHA384_DIGEST sha384CpHash;
-    TPM2B_SHA384_DIGEST sha384RpHash;
-#endif
-#if ALG_SHA512
-    TPM2B_SHA512_DIGEST sha512CpHash;
-    TPM2B_SHA512_DIGEST sha512RpHash;
-#endif
-#if ALG_SM3_256
-    TPM2B_SM3_256_DIGEST sm3_256CpHash;
-    TPM2B_SM3_256_DIGEST sm3_256RpHash;
-#endif
+    FOR_EACH_HASH(CP_HASH)              // space for the CP hashes
+    FOR_EACH_HASH(RP_HASH)              // space for the RP hashes
 } COMMAND;
 
-// Global sting constants for consistency in KDF function calls. These string constants are shared
-// across functions to make sure that they are all using consistent sting values.
+// Global string constants for consistency in KDF function calls. These string constants are shared
+// across functions to make sure that they are all using consistent string values.
 #define STRING_INITIALIZER(value)   {{sizeof(value), {value}}}
 #define TPM2B_STRING(name, value)					\
     typedef union name##_ {						\
@@ -1252,33 +1254,20 @@ EXTERN      BYTE            *s_cachedNvRamRef;
 EXTERN OBJECT           s_objects[MAX_LOADED_OBJECTS];
 #endif // OBJECT_C
 
-/* 5.9.16.5	From PCR.c */
+/* 5.9.17.5	From PCR.c */
 
 #if defined PCR_C || defined GLOBAL_C
 
+/* The following macro is used to define the per-implemented-hash space. This implementation
+   reserves space for all implemented hashes. */
+
+#define PCR_ALL_HASH(HASH, Hash)    BYTE    Hash##Pcr[HASH##_DIGEST_SIZE];
+
 typedef struct
 {
-#if ALG_SHA1
-    // SHA1 PCR
-    BYTE    sha1Pcr[SHA1_DIGEST_SIZE];
-#endif
-#if ALG_SHA256
-    // SHA256 PCR
-    BYTE    sha256Pcr[SHA256_DIGEST_SIZE];
-#endif
-#if ALG_SHA384
-    // SHA384 PCR
-    BYTE    sha384Pcr[SHA384_DIGEST_SIZE];
-#endif
-#if ALG_SHA512
-    // SHA512 PCR
-    BYTE    sha512Pcr[SHA512_DIGEST_SIZE];
-#endif
-#if ALG_SM3_256
-    // SHA256 PCR
-    BYTE    sm3_256Pcr[SM3_256_DIGEST_SIZE];
-#endif
+    FOR_EACH_HASH(PCR_ALL_HASH)
 } PCR;
+
 typedef struct
 {
     unsigned int    stateSave : 1;              // if the PCR value should be

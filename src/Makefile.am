@@ -4,25 +4,36 @@
 # For the license, see the LICENSE file in the root directory.
 #
 
-lib_LTLIBRARIES=libtpms.la
+AM_CFLAGS = @AM_CFLAGS@
+AM_LDFLAGS = @AM_LDFLAGS@ $(HARDENING_LDFLAGS) $(SANITIZERS) $(FUZZER) 
+noinst_LTLIBRARIES =
+noinst_HEADERS =
+
+lib_LTLIBRARIES = libtpms.la
+libtpms_la_LIBADD =
 
 common_CFLAGS = -include tpm_library_conf.h \
                 -I$(top_srcdir)/include/libtpms \
 		-I$(top_builddir)/include/libtpms \
+		$(AM_CFLAGS) \
                 $(HARDENING_CFLAGS) \
                $(SANITIZERS) \
-               $(FUZZER)
+               $(FUZZER) \
+               $(LIBCRYPTO_EXTRA_CFLAGS)
 
+# build with libtpms callback support
+common_CFLAGS += -DTPM_LIBTPMS_CALLBACKS
+# let the default NVRAM write to disk
+common_CFLAGS += -DTPM_NV_DISK
 
-LDFLAGS += $(HARDENING_LDFLAGS) $(SANITIZERS) $(FUZZER)
-
+if WITH_TPM1
 #
 # TPM1.2
 #
 
-noinst_LTLIBRARIES = libtpms_tpm12.la
+noinst_LTLIBRARIES += libtpms_tpm12.la
 
-libtpms_la_LIBADD = libtpms_tpm12.la
+libtpms_la_LIBADD += libtpms_tpm12.la
 
 libtpms_tpm12_la_LIBADD =
 
@@ -38,10 +49,6 @@ libtpms_tpm12_la_CFLAGS += -DTPM_VOLATILE_LOAD
 libtpms_tpm12_la_CFLAGS += -DTPM_ENABLE_ACTIVATE
 # build with AES support for symmetric crypto
 libtpms_tpm12_la_CFLAGS += -DTPM_AES
-# build with libtpms callback support
-libtpms_tpm12_la_CFLAGS += -DTPM_LIBTPMS_CALLBACKS
-# let the default NVRAM write to disk
-libtpms_tpm12_la_CFLAGS += -DTPM_NV_DISK
 # build a POSIX type of TPM
 libtpms_tpm12_la_CFLAGS += -DTPM_POSIX
 # build without maintenance commands
@@ -58,7 +65,6 @@ libtpms_tpm12_la_SOURCES = \
 	tpm12/tpm_cryptoh.c \
 	tpm12/tpm_counter.c \
 	tpm12/tpm_daa.c \
-	tpm12/tpm_debug.c \
 	tpm12/tpm_delegate.c \
 	tpm12/tpm_digest.c \
 	tpm12/tpm_error.c \
@@ -69,10 +75,8 @@ libtpms_tpm12_la_SOURCES = \
 	tpm12/tpm_key.c \
 	tpm12/tpm_load.c \
 	tpm12/tpm_maint.c \
-	tpm12/tpm_memory.c \
 	tpm12/tpm_migration.c \
 	tpm12/tpm_nonce.c \
-	tpm12/tpm_nvfile.c \
 	tpm12/tpm_nvram.c \
 	tpm12/tpm_openssl_helpers.c \
 	tpm12/tpm_owner.c \
@@ -94,7 +98,7 @@ libtpms_tpm12_la_SOURCES = \
 	tpm_tpm12_interface.c \
 	tpm_tpm12_tis.c
 
-noinst_HEADERS = \
+noinst_HEADERS += \
 	tpm12/tpm_admin.h \
 	tpm12/tpm_audit.h \
 	tpm12/tpm_auth.h \
@@ -104,7 +108,7 @@ noinst_HEADERS = \
 	tpm12/tpm_crypto.h \
 	tpm12/tpm_cryptoh.h \
 	tpm12/tpm_daa.h \
-	tpm12/tpm_debug.h \
+	tpm_debug.h \
 	tpm12/tpm_delegate.h \
 	tpm12/tpm_digest.h \
 	tpm12/tpm_global.h \
@@ -118,7 +122,7 @@ noinst_HEADERS = \
 	tpm12/tpm_maint.h \
 	tpm12/tpm_migration.h \
 	tpm12/tpm_nonce.h \
-	tpm12/tpm_nvfile.h \
+	tpm_nvfile.h \
 	tpm12/tpm_nvram_const.h \
 	tpm12/tpm_nvram.h \
 	tpm12/tpm_openssl_helpers.h \
@@ -165,6 +169,8 @@ endif # LIBTPMS_USE_OPENSSL
 
 endif # LIBTPMS_USE_FREEBL
 
+endif # WITH_TPM1
+
 # TPM2
 #
 
@@ -180,8 +186,6 @@ libtpms_tpm2_la_CFLAGS = $(common_CFLAGS)
 
 libtpms_tpm2_la_CFLAGS += -D_POSIX_
 libtpms_tpm2_la_CFLAGS += -DTPM_POSIX
-# build with libtpms callback support
-libtpms_tpm2_la_CFLAGS += -DTPM_LIBTPMS_CALLBACKS
 
 libtpms_tpm2_la_SOURCES = \
 	tpm2/ACT_spt.c \
@@ -535,6 +539,7 @@ libtpms_tpm2_la_SOURCES += \
 	tpm2/crypto/openssl/CryptRsa.c \
 	tpm2/crypto/openssl/CryptSmac.c \
 	tpm2/crypto/openssl/CryptSym.c \
+	tpm2/crypto/openssl/ExpDCache.c \
 	tpm2/crypto/openssl/Helpers.c \
 	tpm2/crypto/openssl/TpmToOsslDesSupport.c \
 	tpm2/crypto/openssl/TpmToOsslMath.c \
@@ -546,6 +551,7 @@ noinst_HEADERS += \
 	tpm2/crypto/openssl/BnMath_fp.h \
 	tpm2/crypto/openssl/BnMemory_fp.h \
 	tpm2/crypto/openssl/BnValues.h \
+	tpm2/crypto/openssl/ExpDCache_fp.h \
 	tpm2/crypto/openssl/Helpers_fp.h \
 	tpm2/crypto/openssl/LibSupport.h \
 	tpm2/crypto/openssl/TpmToOsslDesSupport_fp.h \
@@ -560,6 +566,9 @@ libtpms_tpm2_la_CFLAGS += \
 	-I $(srcdir)/tpm2/crypto \
 	-I $(srcdir)/tpm2/crypto/openssl
 
+
+libtpms_tpm2_la_LIBADD += -lcrypto
+
 endif # LIBTPMS_USE_OPENSSL
 
 endif # WITH_TPM2
@@ -569,21 +578,25 @@ endif # WITH_TPM2
 #
 
 libtpms_la_SOURCES = \
-	tpm_library.c
+	disabled_interface.c \
+	tpm_debug.c \
+	tpm_library.c \
+	tpm_memory.c \
+	tpm_nvfile.c
 
 libtpms_la_CFLAGS = $(common_CFLAGS)
 
 libtpms_la_LDFLAGS = -version-info $(LIBTPMS_VERSION_INFO) \
-                     -no-undefined
+                     -no-undefined $(AM_LDFLAGS)
 
 if HAVE_VERSION_SCRIPT
 libtpms_la_LDFLAGS += -Wl,--version-script=$(srcdir)/libtpms.syms
 endif
 
-LDFLAGS_ARCH  = $(findstring -m32, $(CFLAGS))
-LDFLAGS_ARCH += $(findstring -m64, $(CFLAGS))
-LDFLAGS_ARCH += $(findstring -m32, $(LDFLAGS))
-LDFLAGS_ARCH += $(findstring -m64, $(LDFLAGS))
+LDFLAGS_ARCH  = $(findstring -m32, $(AM_CFLAGS))
+LDFLAGS_ARCH += $(findstring -m64, $(AM_CFLAGS))
+LDFLAGS_ARCH += $(findstring -m32, $(AM_LDFLAGS))
+LDFLAGS_ARCH += $(findstring -m64, $(AM_LDFLAGS))
 
 check-local: SHELL?="/usr/bin/env bash"
 check-local:

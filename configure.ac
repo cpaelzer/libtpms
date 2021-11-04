@@ -3,11 +3,11 @@
 #
 # See the LICENSE file for the license associated with this file.
 
-AC_INIT([libtpms], [0.8.2])
-AC_PREREQ(2.12)
+AC_INIT([libtpms],[0.9.0])
+AC_PREREQ([2.69])
 AC_CONFIG_SRCDIR(Makefile.am)
 AC_CONFIG_AUX_DIR([.])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
@@ -28,7 +28,7 @@ AC_SUBST([LIBTPMS_VERSION_INFO])
 
 DEBUG=""
 AC_MSG_CHECKING([for debug-enabled build])
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [create a debug build]),
+AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],[create a debug build]),
   [if test "$enableval" = "yes"; then
      DEBUG="yes"
      AC_MSG_RESULT([yes])
@@ -67,16 +67,23 @@ m4_if(
 
 AM_CONDITIONAL([HAVE_VERSION_SCRIPT], [test "x$have_version_script" = "xyes"])
 
+AC_ARG_WITH([tpm1],
+    AS_HELP_STRING([--with-tpm1], [build libtpms with TPM 1.2 support]), [], [with_tpm1=yes])
+AM_CONDITIONAL([WITH_TPM1], [test "x$with_tpm1" != "xno"])
+AS_IF([test "x$with_tpm1" != "xno"], [
+    AC_DEFINE([WITH_TPM1], [1], [With TPM 1.2 support])
+    AC_SUBST([WITH_TPM1], [1])
+])
 
 AC_ARG_WITH([tpm2],
-	AC_HELP_STRING([--with-tpm2],
-		       [build libtpms with TPM2 support]),
+	AS_HELP_STRING([--with-tpm2],[build libtpms with TPM2 support]),
 	[],
 	[with_tpm2=yes]
 )
 AS_IF([test "x$with_tpm2" = xyes], [
 	AC_MSG_RESULT([Building with TPM2 support])
 	AC_DEFINE_UNQUOTED([WITH_TPM2], 1, [whether to support TPM2])
+	AC_SUBST([WITH_TPM2], [1])
 	AM_CONDITIONAL(WITH_TPM2, true)
 	cryptolib=openssl
 ], [
@@ -87,8 +94,7 @@ AS_IF([test "x$with_tpm2" = xyes], [
 AC_SUBST(cryptolib, $cryptolib)
 
 AC_ARG_WITH([openssl],
-            AC_HELP_STRING([--with-openssl],
-                           [build libtpms with openssl library]),
+            AS_HELP_STRING([--with-openssl],[build libtpms with openssl library]),
               [AC_CHECK_LIB(crypto,
                             [AES_set_encrypt_key],
                             [],
@@ -148,6 +154,8 @@ openssl)
         AC_DEFINE([USE_OPENSSL_CRYPTO_LIBRARY],
                   [1],
                   [use openssl crypto library])
+	LIBCRYPTO_EXTRA_CFLAGS="-DOPENSSL_SUPPRESS_DEPRECATED"
+	AC_SUBST([LIBCRYPTO_EXTRA_CFLAGS])
 	;;
 esac
 
@@ -215,10 +223,19 @@ AS_IF([test "x$enable_use_openssl_functions" != "xno"], [
 	AC_CHECK_LIB([crypto], [EVP_PKEY_verify_init],, not_found=1)
 	AC_CHECK_LIB([crypto], [EVP_PKEY_verify],, not_found=1)
 	AC_CHECK_LIB([crypto], [EVP_get_digestbyname],, not_found=1)
-	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set0_rsa_oaep_label],, not_found=1)
-	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set_rsa_padding],, not_found=1)
-	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set_rsa_oaep_md],, not_found=1)
-	AX_CHECK_DEFINE([<openssl/evp.h>], [EVP_PKEY_CTX_set_signature_md],, not_found=1)
+	# OpenSSL 3.0 turned some #defines into functions
+	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set0_rsa_oaep_label],,
+	    AC_CHECK_LIB([crypto], [EVP_PKEY_CTX_set0_rsa_oaep_label],, not_found=1)
+	)
+	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set_rsa_padding],,
+	    AC_CHECK_LIB([crypto], [EVP_PKEY_CTX_set_rsa_padding],, not_found=1)
+	)
+	AX_CHECK_DEFINE([<openssl/rsa.h>], [EVP_PKEY_CTX_set_rsa_oaep_md],,
+	    AC_CHECK_LIB([crypto], [EVP_PKEY_CTX_set_rsa_oaep_md],, not_found=1)
+	)
+	AX_CHECK_DEFINE([<openssl/evp.h>], [EVP_PKEY_CTX_set_signature_md],,
+	    AC_CHECK_LIB([crypto], [EVP_PKEY_CTX_set_signature_md],, not_found=1)
+	)
 	if test "x$not_found" = "x0"; then
 		use_openssl_functions_rsa=1
 		use_openssl_functions_for="${use_openssl_functions_for}RSA "
@@ -250,12 +267,11 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 
 #AM_GNU_GETTEXT_VERSION([0.15])
 #AM_GNU_GETTEXT([external])
 
-AC_HEADER_STDC
 AC_C_CONST
 AC_C_INLINE
 
@@ -305,9 +321,12 @@ if test "x$enable_hardening" != "xno"; then
 	AC_SUBST([HARDENING_LDFLAGS])
 fi
 
-CFLAGS="$CFLAGS $COVERAGE_CFLAGS -Wall -Werror -Wreturn-type -Wsign-compare -Wno-self-assign"
-CFLAGS="$CFLAGS -Wmissing-prototypes"
-LDFLAGS="$LDFLAGS $COVERAGE_LDFLAGS"
+AM_CFLAGS="$CFLAGS $COVERAGE_CFLAGS -Wall -Werror -Wreturn-type -Wsign-compare -Wno-self-assign -Wmissing-prototypes"
+AM_CFLAGS="$AM_CFLAGS"
+AM_LDFLAGS="$LDFLAGS $COVERAGE_LDFLAGS"
+
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_LDFLAGS])
 
 AC_CONFIG_FILES(Makefile                   \
 		dist/libtpms.spec          \
@@ -330,14 +349,15 @@ if test -z "$with_tpm2"; then
 fi
 
 echo
-echo "CFLAGS=$CFLAGS"
+echo "AM_CFLAGS=$AM_CFLAGS"
 echo "HARDENING_CFLAGS=$HARDENING_CFLAGS"
 echo "HARDENING_LDFLAGS=$HARDENING_LDFLAGS"
-echo "LDFLAGS=$LDFLAGS"
+echo "AM_LDFLAGS=$AM_LDFLAGS"
 echo
 echo "Version to build        : $PACKAGE_VERSION"
 echo "Crypto library          : $cryptolib"
 echo "Debug build             : $enable_debug"
+echo "With TPM1.2 support     : $with_tpm1"
 echo "With TPM2 support       : $with_tpm2"
 echo "HAVE_VERSION_SCRIPT     : $have_version_script"
 echo "Use openssl crypto for  : $use_openssl_functions_for"

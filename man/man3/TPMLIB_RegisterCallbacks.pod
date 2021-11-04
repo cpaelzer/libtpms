@@ -136,7 +136,7 @@ The I<tpm_number> is always 0 and can be ignored.
 The I<name> parameter is either one of B<TPM_SAVESTATE_NAME>,
 B<TPM_VOLATILESTATE_NAME>, or B<TPM_PERMANENT_ALL_NAME> and indicates
 which one of the 3 types of state is supposed to be deleted.
-The I<mustExist> parameter indicates wheteher the given data must exist
+The I<mustExist> parameter indicates whether the given data must exist
 and the implementing function should return B<TPM_FAIL> if the data did
 not exist.
 
@@ -193,7 +193,7 @@ an error value otherwise.
 
 =item B<TPM_SUCCESS>
 
-The function completed sucessfully.
+The function completed successfully.
 
 =item B<TPM_FAIL>
 
@@ -217,14 +217,16 @@ B<libtpms/tpm_error.h>
  	return TPM_SUCCESS;
  }
 
- static TPM_RESULT tpm_io_getlocality(TPM_MODIFIER_INDICATOR *locModif)
+ static TPM_RESULT mytpm_io_getlocality(TPM_MODIFIER_INDICATOR *locModif,
+                                        uint32_t tpm_number)
  {
  	*locModif = locality;
 
  	return TPM_SUCCESS:
  }
 
- static TPM_RESULT mytpm_io_getphysicalpresence(TPM_BOOL *phyPres)
+ static TPM_RESULT mytpm_io_getphysicalpresence(TPM_BOOL *physicalPresence,
+                                                uint32_t tpm_number)
  {
  	*physicalPresence = FALSE;
 
@@ -253,7 +255,7 @@ B<libtpms/tpm_error.h>
 
      [...]
 
-     if (TPMLIB_RegisterCallbacks(cbs) != TPM_SUCCESS) {
+     if (TPMLIB_RegisterCallbacks(&cbs) != TPM_SUCCESS) {
          fprintf(stderr, "Could not register the callbacks.\n");
          return 1;
      }

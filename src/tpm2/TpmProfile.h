@@ -3,7 +3,7 @@
 /*	Constants Reflecting a Particular TPM Implementation (e.g. PC Client)	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmProfile.h 1594 2020-03-26 22:15:48Z kgoldman $		*/
+/*            $Id: TpmProfile.h 1629 2020-06-01 20:50:13Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -219,7 +219,7 @@
 #define MAX_ACTIVE_SESSIONS             64
 #endif
 #ifndef CONTEXT_SLOT
-#define CONTEXT_SLOT                    UINT8   /* libtpms: use 'old' type */
+#define CONTEXT_SLOT                    UINT16   /* libtpms: changed from UINT8 in v0.9.0 */
 #endif
 #ifndef MAX_LOADED_SESSIONS
 #define MAX_LOADED_SESSIONS             3
@@ -254,6 +254,15 @@
 #ifndef MAX_CAP_BUFFER
 #define MAX_CAP_BUFFER                  1024
 #endif
+
+/* for PC client, permits
+
+   1300 bytes reserved
+   7 * 2600 persistent objects
+   4000 NV indexes
+   60 * 68 nv index metadata
+*/
+
 #ifndef NV_MEMORY_SIZE
 /* libtmps: 65 OBJECTs in USER NVRAM expanded by 704 bytes due to size
  * increase of OBJECT from 2048 bit RSA keys to 3072 bit by 704 bytes*/
@@ -325,7 +334,7 @@
 #define ALG_AES                         ALG_YES
 #endif
 #ifndef ALG_CAMELLIA
-#define ALG_CAMELLIA                    ALG_NO       /* libtpms: NO */
+#define ALG_CAMELLIA                    ALG_YES       /* libtpms: YES since v0.9 */
 #endif
 #ifndef ALG_CBC
 #define ALG_CBC                         ALG_YES
