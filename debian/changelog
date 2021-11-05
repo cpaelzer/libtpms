@@ -1,3 +1,9 @@
+libtpms (0.9.0-0ubuntu2) jammy; urgency=medium
+
+  * Add autopkgtest.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 05 Nov 2021 16:10:38 +0000
+
 libtpms (0.9.0-0ubuntu1) jammy; urgency=medium
 
   * New upstream release.

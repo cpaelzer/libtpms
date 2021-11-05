@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+dh_autoreconf 2>/dev/null
+./debian/rules override_dh_auto_configure
+
+make check VERBOSE=1
