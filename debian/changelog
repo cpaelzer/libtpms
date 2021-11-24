@@ -1,3 +1,9 @@
+libtpms (0.9.0-0ubuntu3) jammy; urgency=medium
+
+  * No-change rebuild against openssl3
+
+ -- Simon Chopin <simon.chopin@canonical.com>  Wed, 24 Nov 2021 13:54:17 +0000
+
 libtpms (0.9.0-0ubuntu2) jammy; urgency=medium
 
   * Add autopkgtest.
