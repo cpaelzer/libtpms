@@ -1,5 +1,6 @@
 Description: fix issues of variables that may be used before initialization
  Detected by gcc on Ubuntu/s390x
+Forwarded: https://github.com/stefanberger/libtpms/pull/305
 Author: Steve Langasek <steve.langasek@ubuntu.com>
 Last-Update: 2020-12-09
 
