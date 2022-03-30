@@ -1,3 +1,14 @@
+libtpms (0.9.3-0ubuntu1) jammy; urgency=medium
+
+  * merge 0.9.3 from upstram to stabilize libtpms in jammy; related to
+    but not fixing (LP: 1948748)
+    - d/p/lp-1948748-tpm2-Address-Coverity-Issue-by-casting-1-before-shif.patch:
+      avoid bad shift
+    - d/p/uninitialized-variable.patch: add forwarding info
+    - drop d/p/fix-openssl3-compat.patch: part of 0.9.3
+
+ -- Christian Ehrhardt <christian.ehrhardt@canonical.com>  Wed, 30 Mar 2022 09:04:10 +0200
+
 libtpms (0.9.0-0ubuntu4) jammy; urgency=medium
 
   * d/p/fix-openssl3-compat.patch: Cherry-picked from upstream (LP: #1962601)
