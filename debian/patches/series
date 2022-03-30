@@ -2,3 +2,4 @@
 0003-set-man-page-date-to-last-changelog.patch
 0004-fix-ftbfs-bug.patch
 uninitialized-variable.patch
+lp-1948748-tpm2-Address-Coverity-Issue-by-casting-1-before-shif.patch

@@ -1,0 +1,37 @@
+From d78a4520ba3157087e1e438b519618f26d85fae3 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Wed, 16 Feb 2022 11:49:11 -0500
+Subject: [PATCH] tpm2: Address Coverity Issue by casting '1' before shift (CID
+ 1470813)
+
+Cast the '1' to UINT64 before shifting it.
+
+Since the shift value is always below 32 it would have never exceeded
+the 32bit value it was using before the cast.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+
+Origin: upstream, https://github.com/stefanberger/libtpms/commit/d78a4520ba31
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1948748
+Last-Update: 2022-03-30
+
+---
+ src/tpm2/NVMarshal.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/tpm2/NVMarshal.c b/src/tpm2/NVMarshal.c
+index c7cd1e0..cdac3e2 100644
+--- a/src/tpm2/NVMarshal.c
++++ b/src/tpm2/NVMarshal.c
+@@ -806,7 +806,7 @@ pcrbanks_algs_active(const TPML_PCR_SELECTION *pcrAllocated)
+     for(i = 0; i < pcrAllocated->count; i++) {
+         for (j = 0; j < pcrAllocated->pcrSelections[i].sizeofSelect; j++) {
+             if (pcrAllocated->pcrSelections[i].pcrSelect[j]) {
+-                algs_active |= 1 << pcrAllocated->pcrSelections[i].hash;
++                algs_active |= ((UINT64)1 << pcrAllocated->pcrSelections[i].hash);
+                 break;
+             }
+         }
+-- 
+2.35.1
+
